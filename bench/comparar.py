@@ -314,9 +314,14 @@ def escribir(R, rob_A, rob_B, costo, n, n_prueba):
     for k, v in rob_A.items():
         vb = "no medido" if rob_B is None else (f"{rob_B[k] * 100:.0f} % igual" if k in rob_B else ("no aplica" if "irrelevantes" in k else f"{rob_B.get(k.replace('JSON idéntico', 'mismo Top-1'), float('nan')) * 100:.0f} % igual"))
         L.append(f"| {k} | {v * 100:.0f} % igual | {vb} |")
-    L += ["", "## Lectura", "",
-          "- Las filas de B y C dicen «no medido» cuando no hay clave de API en el entorno: **no se afirma ninguna ventaja ni desventaja de Jev o del LLM hasta medirlos** con esta misma batería.",
-          "- Para medirlos: `export TYPESAFE_API_KEY=...` (y opcionalmente `JEV_MODEL=jev-1.13.0`), `export ANTHROPIC_API_KEY=...` y `LLM_MODEL=...`; luego `python bench/comparar.py`.",
+    sin_medir = [k.split(" (")[0] for k, v in R.items() if v["estado"] != "medido"]
+    L += ["", "## Lectura", ""]
+    if sin_medir:
+        L.append("- No medidos en esta corrida: " + ", ".join(sin_medir) + ". **No se afirma ninguna ventaja ni desventaja de un motor hasta medirlo** con esta misma batería.")
+        L.append("- Para medirlos: `TYPESAFE_API_KEY` (y opcionalmente `JEV_MODEL=jev-1.13.0`) para Jev; `ANTHROPIC_API_KEY` y `LLM_MODEL` para el LLM; luego `python bench/comparar.py`.")
+    else:
+        L.append("- Todos los motores se midieron con la misma batería de solicitudes.")
+    L += [
           "- El motor A es determinista: el Top-3 no depende del orden ni de los nombres de los proveedores, y los proveedores irrelevantes salen como descartados con motivo.",
           "- Los datos simulados siguen una estructura parecida a la que supone el motor A, así que su ventaja frente a las referencias probablemente está exagerada respecto a datos reales.",
           "", "![Comparación](../bench/comparacion.png)"]

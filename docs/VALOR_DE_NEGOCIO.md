@@ -53,3 +53,19 @@ El equipo de operaciones compara a mano más de diez proveedores por cada solici
 ## 6. Evidencia reproducible
 
 `python scripts/backtest.py` (costo y puntualidad), `python scripts/replay.py` (detección de Andina), `python -m scripts.casos_dificiles` (revisión, escalamiento, concentración), `python bench/comparar.py` (motores y robustez), `pytest` (45 pruebas).
+
+## 7. Comparación medida con Jev (TypeSafe)
+
+500 solicitudes, datos sintéticos, mismas reglas duras para todos los motores (`reportes/paso13_banco.md`).
+
+| | Motor A (propio) | Jev 1.13 | Siempre el más barato |
+|---|---|---|---|
+| Arrepentimiento medio | $95.664 | $159.419 | $205.423 |
+| Elige el óptimo | 66 % | 51 % | 50 % |
+| Latencia p50 / p95 | 9 / 12 ms | 310 / 510 ms | — |
+| Costo | ≈ 0 | US$ 0,068 por 1.000 decisiones (1.627 tokens por decisión) | — |
+
+- Jev supera con claridad al más barato y al azar, pero queda por detrás del motor A en precisión.
+- Estabilidad: ante cambios de orden o de nombres Jev repite 93 %; ante la misma solicitud ×20, 80 %. El motor A es 100 % determinista.
+- Su costo es marginal frente al hosting (decenas de dólares al mes en AWS o Azure), pero no sustituye la infraestructura: las reglas duras y las estadísticas siguen corriendo en nuestro código.
+- Limitación: el simulador sigue una estructura parecida a la del motor A, así que su ventaja probablemente está exagerada frente a datos reales. El LLM de propósito general (motor C) no se midió.
