@@ -56,6 +56,8 @@
       @if (registrada(); as r) {
         <div class="aviso ok" role="status"><app-icono nombre="ok" /><div>{{ i18n.t('rec.registrada') }}<ul><li>{{ i18n.t(r.acepto ? 'rec.registradaAcepto' : 'rec.registradaOtro') }}</li></ul></div></div>
       }
+      @if (esSolicitante()) { <div class="aviso info" role="status"><app-icono nombre="info" />{{ i18n.t('rec.soloLectura') }}</div> }
+      @else if (rec()?.escalar_gerencia && !puedeDecidir()) { <div class="aviso ambar" role="status"><app-icono nombre="info" />{{ i18n.t('rec.soloGerencia') }}</div> }
       @if (previa(); as p) { <div class="aviso ambar" role="status"><app-icono nombre="info" />{{ i18n.t('rec.yaDecidida', { usuario: p.usuario }) }}</div> }
 
       @if (rec(); as r) {
@@ -107,7 +109,7 @@
                   </button>
                   <a class="btn fantasma peq" [routerLink]="['/proveedores', p.proveedor_id]">{{ i18n.t('rec.fichaVer') }}</a>
                   <span class="espacio"></span>
-                  @if (!registrada() && !previa()) {
+                  @if (!registrada() && !previa() && puedeDecidir()) {
                     @if (p.posicion === 1) {
                       <button type="button" class="btn primario" (click)="aprobar()" [disabled]="enviando()">{{ i18n.t('rec.aprobar') }}</button>
                     } @else {

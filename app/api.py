@@ -6,17 +6,19 @@
   GET  /salud
 Persistencia: solo a traves de engine.repositorio.Repositorio (COSCO_REPO o COSCO_DB; por defecto SQLite data/cosco.db).
 Lectura para interfaces: /config, /datos/tablas, /solicitudes/prueba, /solicitudes/{id}, /decisiones/{id}, /pendientes, /tableros/decisiones, /tableros/cierres.
-Arranque: uvicorn app.api:app --reload"""
+Roles: solicitante (pide y ve lo suyo) · operador (revisa y decide) · gerencia (todo, además decide lo escalado y gestiona los avisos).
+Avisos por Slack: ver app/notificaciones.py. Arranque: uvicorn app.api:app --reload"""
 from __future__ import annotations
 import json, os, threading
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
-from app import auth
+from app import auth, notificaciones
 from contratos.contracts import CierreServicioIn, DecisionIn, RecomendacionOut, SolicitudIn
 from engine.datos import Base, cargar_config
 from engine.repositorio import ErrorNegocio, crear_repositorio
@@ -69,7 +71,7 @@ def estado() -> Estado:
 app = FastAPI(title="Recomendador de proveedores · COSCO SHIPPING (datos sintéticos)", version="1.1", dependencies=[Depends(auth.exigir_sesion)])
 app.include_router(auth.router)
 app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("COSCO_CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",") if o],
-                   allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"], max_age=600)
+                   allow_methods=["GET", "POST", "PUT", "OPTIONS"], allow_headers=["Authorization", "Content-Type"], max_age=600)
 
 
 @app.middleware("http")
@@ -97,7 +99,7 @@ def salud():
 
 
 @app.post("/recomendar", response_model=RecomendacionOut)
-def recomendar(sol: SolicitudIn):
+def recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.sesion)):
     E = estado()
     b = E.base
     if sol.corredor_id not in b.corredores.index:
@@ -113,19 +115,26 @@ def recomendar(sol: SolicitudIn):
         out = E.motor.recomendar(sol)
         as_of = as_of_de(sol)
         E.repo.guardar_recomendacion(sol, out, as_of.strftime(ISO))
+    alm = auth.almacen()
+    alm.registrar_autor(sol.solicitud_id, u["usuario"], datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+    fondo.add_task(notificaciones.notificar, alm, sol, out, u["usuario"])      # aviso por Slack en segundo plano
     return out
 
 
 @app.post("/decision")
-def decision(d: DecisionIn, u: dict = Depends(auth.sesion)):
+def decision(d: DecisionIn, u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
     d = d.model_copy(update={"usuario": u["usuario"]}) if auth.exigida() else d   # el autor sale de la sesión, no del cuerpo
     E = estado()
+    if u["rol"] != "gerencia":                       # lo escalado a gerencia solo lo decide gerencia
+        r = E.repo.recomendacion(d.solicitud_id, d.recomendacion_id)
+        if r and RecomendacionOut.model_validate_json(r[1]).escalar_gerencia:
+            raise HTTPException(403, "Este caso está escalado a gerencia: solo gerencia puede decidirlo")
     with E.lock:
         return E.repo.registrar_decision(d, E.base.tarifa_vigente, proveedores_validos=E.base.nombres, ventana_flex_h=E.cfg.get("ventana_flex_h", 72))
 
 
 @app.post("/cierre")
-def cierre(ci: CierreServicioIn):
+def cierre(ci: CierreServicioIn, _u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
     E = estado()
     with E.lock:
         r = E.repo.cerrar_servicio(ci)
@@ -184,7 +193,9 @@ def decision_de(sid: str):
 
 
 @app.get("/pendientes")
-def pendientes(filtro: str = Query("revision", pattern="^(revision|gerencia)$")):
+def pendientes(filtro: str = Query("revision", pattern="^(revision|gerencia)$"), u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
+    if filtro == "gerencia" and u["rol"] != "gerencia":
+        raise HTTPException(403, "Solo gerencia ve la lista de escalados")
     E = estado()
     out = []
     for j in E.repo.recomendaciones_sin_decision():
@@ -197,10 +208,55 @@ def pendientes(filtro: str = Query("revision", pattern="^(revision|gerencia)$"))
 
 
 @app.get("/tableros/decisiones")
-def tablero_decisiones():
+def tablero_decisiones(_u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
     return Response(_json(estado().repo.decisiones_tablero()), media_type="application/json")
 
 
 @app.get("/tableros/cierres")
-def tablero_cierres():
+def tablero_cierres(_u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
     return Response(_json(estado().repo.cierres_tablero()), media_type="application/json")
+
+
+# ---------- seguimiento por rol y avisos ----------
+@app.get("/mis-solicitudes")
+def mis_solicitudes(u: dict = Depends(auth.sesion)):
+    """El solicitante ve las suyas; operador y gerencia ven todas. Estado: decidida · escalada · en_revision · lista (sin decidir y sin alerta)."""
+    E = estado()
+    out = []
+    for a in auth.almacen().solicitudes_de(None if u["rol"] in ("operador", "gerencia") else u["usuario"]):
+        sid = a["solicitud_id"]
+        r, d = E.repo.recomendacion(sid), E.repo.decision_de(sid)
+        rec = RecomendacionOut.model_validate_json(r[1]) if r else None
+        estado_ = "decidida" if d else ("escalada" if rec and rec.escalar_gerencia else "en_revision" if rec and rec.requiere_revision else "lista")
+        top = rec.ranking[0] if rec and rec.ranking else None
+        out.append({"solicitud_id": sid, "solicitante": a["usuario"], "fecha": a["fecha"], "estado": estado_,
+                    "proveedor_sugerido": top.nombre if top else None, "proveedor_elegido": d["proveedor_elegido"] if d else None,
+                    "decidida_por": d["usuario"] if d else None, "motivos": rec.motivos_revision if rec else []})
+    return out
+
+
+class AjustesIn(BaseModel):
+    slack_activo: Optional[bool] = None
+    avisar_revision: Optional[bool] = None
+    avisar_escalamiento: Optional[bool] = None
+
+
+@app.get("/notificaciones/ajustes")
+def ajustes_avisos(_u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
+    return {"ajustes": auth.almacen().ajustes(), "webhooks": notificaciones.configurados()}
+
+
+@app.put("/notificaciones/ajustes")
+def cambiar_ajustes(a: AjustesIn, _u: dict = Depends(auth.exigir_rol("gerencia"))):
+    auth.almacen().poner_ajustes({k: v for k, v in a.model_dump().items() if v is not None})
+    return {"ajustes": auth.almacen().ajustes(), "webhooks": notificaciones.configurados()}
+
+
+@app.get("/notificaciones/historial")
+def historial_avisos(limite: int = Query(50, ge=1, le=200), _u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
+    return auth.almacen().notificaciones(limite)
+
+
+@app.post("/notificaciones/probar")
+def probar_avisos(_u: dict = Depends(auth.exigir_rol("gerencia"))):
+    return notificaciones.probar(auth.almacen())

@@ -60,6 +60,7 @@ import { SelectorPreferencias } from '../shared/preferencias';
                 <div><dt>{{ i18n.t('login.usuario') }}</dt><dd class="num">{{ demo.usuario }}</dd></div>
                 <div><dt>{{ i18n.t('login.clave') }}</dt><dd class="num">{{ demo.clave }}</dd></div>
               </dl>
+              <p class="tenue peq">{{ i18n.t('login.demoRoles') }}</p>
               <button type="button" class="btn peq" (click)="usarDemo()">{{ i18n.t('login.demoUsar') }}</button>
             </aside>
           }

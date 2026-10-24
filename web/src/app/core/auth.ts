@@ -5,7 +5,7 @@ import { CanActivateFn } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { Api } from './api';
 import { CONFIG } from './config';
-import { Sesion } from './modelos';
+import { Rol, Sesion } from './modelos';
 
 const LLAVE = 'cosco.sesion';
 
@@ -15,6 +15,7 @@ export class Auth {
   private router = inject(Router);
   private _s = signal<(Sesion & { vence: number }) | null>(this.leer());
   readonly usuario = computed(() => this._s()?.usuario ?? null);
+  readonly rol = computed<Rol | null>(() => this._s()?.usuario.rol ?? null);
   readonly token = computed(() => this._s()?.access_token ?? null);
   readonly activa = computed(() => !!this._s() && this._s()!.vence > Date.now());
   private reloj?: ReturnType<typeof setTimeout>;
@@ -53,6 +54,12 @@ export class Auth {
 export const guardia: CanActivateFn = (_r, estado) => {
   const a = inject(Auth);
   return a.activa() ? true : inject(Router).createUrlTree(['/login'], { queryParams: { volver: estado.url } });
+};
+
+/** Deja entrar a una pantalla solo a ciertos roles; el resto vuelve al inicio (el servidor también lo hace cumplir). */
+export const rolGuardia = (...roles: Rol[]): CanActivateFn => () => {
+  const r = inject(Auth).rol();
+  return r && roles.includes(r) ? true : inject(Router).createUrlTree(['/']);
 };
 
 export const interceptor: HttpInterceptorFn = (req, next) => {

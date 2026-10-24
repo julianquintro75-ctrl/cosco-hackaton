@@ -22,6 +22,11 @@ x-datos: &datos
     COSCO_JWT_SECRET: ${COSCO_JWT_SECRET:-}
     COSCO_SEED_USER: ${COSCO_SEED_USER:-jurado}
     COSCO_SEED_PASSWORD: ${COSCO_SEED_PASSWORD:-Cosco-2026!}
+    # Avisos por Slack (opcional; las URLs son secretos: van en .env, que no se versiona)
+    COSCO_SLACK_WEBHOOK: ${COSCO_SLACK_WEBHOOK:-}
+    COSCO_SLACK_WEBHOOK_OPERACIONES: ${COSCO_SLACK_WEBHOOK_OPERACIONES:-}
+    COSCO_SLACK_WEBHOOK_GERENCIA: ${COSCO_SLACK_WEBHOOK_GERENCIA:-}
+    COSCO_PUBLIC_URL: ${COSCO_PUBLIC_URL:-http://localhost:4200}
   volumes:
     - cosco-data:/app/data
 

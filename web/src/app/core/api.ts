@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { CONFIG } from './config';
-import { Ficha, Nivel, Pendiente, Recomendacion, Sesion, Solicitud, Tablas } from './modelos';
+import { AjustesAvisos, Aviso, EstadoAvisos, Ficha, MiSolicitud, Nivel, Pendiente, Recomendacion, Sesion, Solicitud, Tablas } from './modelos';
 
 @Injectable({ providedIn: 'root' })
 export class Api {
@@ -25,6 +25,12 @@ export class Api {
   pendientes(filtro: 'revision' | 'gerencia') { return firstValueFrom(this.http.get<Pendiente[]>(this.u('/pendientes'), { params: { filtro } })); }
   ficha(pid: string) { return this.una('ficha' + pid, () => firstValueFrom(this.http.get<Ficha>(this.u(`/proveedores/${pid}/ficha`)))); }
   decisiones() { return firstValueFrom(this.http.get<{ acepto_recomendacion?: number }[]>(this.u('/tableros/decisiones'))); }
+
+  misSolicitudes() { return firstValueFrom(this.http.get<MiSolicitud[]>(this.u('/mis-solicitudes'))); }
+  estadoAvisos() { return firstValueFrom(this.http.get<EstadoAvisos>(this.u('/notificaciones/ajustes'))); }
+  cambiarAvisos(a: Partial<AjustesAvisos>) { return firstValueFrom(this.http.put<EstadoAvisos>(this.u('/notificaciones/ajustes'), a)); }
+  historialAvisos() { return firstValueFrom(this.http.get<Aviso[]>(this.u('/notificaciones/historial'))); }
+  probarAvisos() { return firstValueFrom(this.http.post<{ destino: string; estado: string; detalle: string }[]>(this.u('/notificaciones/probar'), {})); }
 
   recomendar(s: Solicitud, nivel: Nivel) {
     const body = { solicitud_id: s.solicitud_id, cliente_id: s.cliente_id, corredor_id: s.corredor_id, tipo_vehiculo_req: s.tipo_vehiculo_req,

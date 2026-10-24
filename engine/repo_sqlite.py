@@ -263,24 +263,106 @@ registrar_backend("sqlite", RepositorioSQLite)
 
 
 # ---------- usuarios de la API (almacén propio, separado de los datos del negocio) ----------
-class UsuariosSQLite:
-    """Usuarios en su propio archivo SQLite (separado de los datos del negocio)."""
+ROLES = ("solicitante", "operador", "gerencia")
+AJUSTES_DEFECTO = {"slack_activo": "1", "avisar_revision": "1", "avisar_escalamiento": "1"}
+USUARIOS_DEMO = (("operador", "Operación (demostración)", "operador"), ("comercial", "Comercial (demostración)", "solicitante"))
 
-    def __init__(self, ruta: str, hash_semilla, usuario_semilla: str):
+
+class UsuariosSQLite:
+    """Usuarios, ajustes de avisos, historial de notificaciones y autor de cada solicitud, en su propio SQLite (aparte del negocio)."""
+
+    def __init__(self, ruta: str, hash_semilla, usuario_semilla: str, demo_roles: bool = True):
         self.ruta = ruta
         Path(ruta).parent.mkdir(parents=True, exist_ok=True)
         con = sqlite3.connect(ruta)
         con.execute("""CREATE TABLE IF NOT EXISTS usuario (usuario TEXT PRIMARY KEY, nombre TEXT NOT NULL, rol TEXT NOT NULL,
                        clave_hash TEXT NOT NULL, activo INTEGER NOT NULL DEFAULT 1)""")
+        con.execute("CREATE TABLE IF NOT EXISTS ajuste (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
+        con.execute("""CREATE TABLE IF NOT EXISTS notificacion (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, evento TEXT NOT NULL,
+                       solicitud_id TEXT, destino TEXT NOT NULL, estado TEXT NOT NULL, detalle TEXT)""")
+        con.execute("CREATE TABLE IF NOT EXISTS solicitud_autor (solicitud_id TEXT PRIMARY KEY, usuario TEXT NOT NULL, fecha TEXT NOT NULL)")
         if con.execute("SELECT count(*) FROM usuario").fetchone()[0] == 0:
             con.execute("INSERT INTO usuario VALUES (?,?,?,?,1)", (usuario_semilla, "Jurado Sabana Hack", "gerencia", hash_semilla()))
             logging.getLogger("cosco.auth").warning("Usuario semilla de demostración creado: %s", usuario_semilla)
+        if demo_roles:      # un usuario por rol para poder probar el flujo completo (se crean una sola vez, aunque la base ya existiera)
+            h = hash_semilla()
+            for u, nombre, rol in USUARIOS_DEMO:
+                if not con.execute("SELECT 1 FROM usuario WHERE usuario=?", (u,)).fetchone():
+                    con.execute("INSERT INTO usuario VALUES (?,?,?,?,1)", (u, nombre, rol, h))
         con.commit(); con.close()
 
-    def obtener(self, usuario: str) -> Optional[dict]:
+    def _con(self):
         con = sqlite3.connect(self.ruta); con.row_factory = sqlite3.Row
+        return con
+
+    def obtener(self, usuario: str) -> Optional[dict]:
+        con = self._con()
         try:
             r = con.execute("SELECT * FROM usuario WHERE usuario=? AND activo=1", (usuario,)).fetchone()
             return dict(r) if r else None
+        finally:
+            con.close()
+
+    # ---- ajustes de avisos ----
+    def ajustes(self) -> dict:
+        con = self._con()
+        try:
+            a = dict(AJUSTES_DEFECTO)
+            a.update({r["clave"]: r["valor"] for r in con.execute("SELECT clave, valor FROM ajuste")})
+            return {k: v == "1" for k, v in a.items()}
+        finally:
+            con.close()
+
+    def poner_ajustes(self, cambios: dict) -> None:
+        con = self._con()
+        try:
+            for k, v in cambios.items():
+                if k in AJUSTES_DEFECTO:
+                    con.execute("INSERT INTO ajuste VALUES (?,?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (k, "1" if v else "0"))
+            con.commit()
+        finally:
+            con.close()
+
+    # ---- historial de notificaciones ----
+    def registrar_notificacion(self, fecha: str, evento: str, solicitud_id: Optional[str], destino: str, estado: str, detalle: str = "") -> None:
+        con = self._con()
+        try:
+            con.execute("INSERT INTO notificacion (fecha, evento, solicitud_id, destino, estado, detalle) VALUES (?,?,?,?,?,?)",
+                        (fecha, evento, solicitud_id, destino, estado, detalle[:300]))
+            con.commit()
+        finally:
+            con.close()
+
+    def ya_notificada(self, solicitud_id: str, evento: str) -> bool:
+        con = self._con()
+        try:
+            return con.execute("SELECT 1 FROM notificacion WHERE solicitud_id=? AND evento=? AND estado IN ('enviada','pendiente') LIMIT 1", (solicitud_id, evento)).fetchone() is not None
+        finally:
+            con.close()
+
+    def notificaciones(self, limite: int = 50) -> list[dict]:
+        con = self._con()
+        try:
+            return [dict(r) for r in con.execute("SELECT * FROM notificacion ORDER BY id DESC LIMIT ?", (limite,))]
+        finally:
+            con.close()
+
+    # ---- quién creó cada solicitud ----
+    def registrar_autor(self, solicitud_id: str, usuario: str, fecha: str) -> None:
+        con = self._con()
+        try:
+            con.execute("INSERT OR IGNORE INTO solicitud_autor VALUES (?,?,?)", (solicitud_id, usuario, fecha))
+            con.commit()
+        finally:
+            con.close()
+
+    def solicitudes_de(self, usuario: Optional[str], limite: int = 100) -> list[dict]:
+        con = self._con()
+        try:
+            if usuario:
+                q = con.execute("SELECT * FROM solicitud_autor WHERE usuario=? ORDER BY fecha DESC LIMIT ?", (usuario, limite))
+            else:
+                q = con.execute("SELECT * FROM solicitud_autor ORDER BY fecha DESC LIMIT ?", (limite,))
+            return [dict(r) for r in q]
         finally:
             con.close()

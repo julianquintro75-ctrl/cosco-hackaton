@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Api } from '../core/api';
+import { Auth } from '../core/auth';
 import { Nivel, Recomendacion, Solicitud, Tablas } from '../core/modelos';
 import { I18n } from '../i18n/i18n.service';
 import { cargaTexto, traducir } from '../i18n/motor';
@@ -21,6 +22,7 @@ const MOTIVOS = ['precio', 'relacion', 'capacidad', 'experiencia_previa', 'clien
 export class Recomendar {
   i18n = inject(I18n);
   private api = inject(Api);
+  private auth = inject(Auth);
   sid = input<string>();
 
   tablas = signal<Tablas | null>(null);
@@ -49,6 +51,9 @@ export class Recomendar {
   actual = computed(() => this.solicitudes().find(s => s.solicitud_id === this.elegida()) ?? null);
   maxCosto = computed(() => Math.max(0, ...(this.rec()?.ranking.map(r => r.costo_esperado) ?? [0])));
   estado = computed<'ok' | 'ambar' | 'rojo'>(() => { const r = this.rec(); return !r || !r.ranking.length || r.escalar_gerencia ? 'rojo' : r.requiere_revision ? 'ambar' : 'ok'; });
+  /** Solo operador y gerencia deciden; lo escalado a gerencia lo decide únicamente gerencia. */
+  puedeDecidir = computed(() => { const r = this.auth.rol(); return r === 'gerencia' || (r === 'operador' && !this.rec()?.escalar_gerencia); });
+  esSolicitante = computed(() => this.auth.rol() === 'solicitante');
   costoRetraso = signal<Record<string, number>>({});
 
   constructor() {

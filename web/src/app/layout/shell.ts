@@ -25,7 +25,7 @@ import { SelectorPreferencias } from '../shared/preferencias';
           <app-preferencias [claro]="true" />
           <div class="yo">
             <span class="avatar" aria-hidden="true">{{ inicial() }}</span>
-            <div class="quien"><strong>{{ auth.usuario()?.nombre }}</strong><small>{{ auth.usuario()?.usuario }}</small></div>
+            <div class="quien"><strong>{{ auth.usuario()?.nombre }}</strong><small>{{ rolTexto() }} · {{ auth.usuario()?.usuario }}</small></div>
             <button type="button" class="salir" (click)="auth.salir()" [attr.aria-label]="i18n.t('nav.salir')" [title]="i18n.t('nav.salir')"><app-icono nombre="salir" /></button>
           </div>
           <small class="sint">{{ i18n.t('app.sintetico') }}</small>
@@ -70,7 +70,7 @@ import { SelectorPreferencias } from '../shared/preferencias';
       .marco { grid-template-columns: 1fr; } .lateral { display: none; }
       .superior { display: flex; align-items: center; gap: .6rem; padding: .5rem .75rem; background: var(--tarjeta); border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 10; }
       .espacio { flex: 1; }
-      .pestanas { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; inset: auto 0 0 0; z-index: 20; background: var(--tarjeta); border-top: 1px solid var(--linea); padding-bottom: env(safe-area-inset-bottom); }
+      .pestanas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(76px, 1fr); overflow-x: auto; position: fixed; inset: auto 0 0 0; z-index: 20; background: var(--tarjeta); border-top: 1px solid var(--linea); padding-bottom: env(safe-area-inset-bottom); }
       .pestanas a { display: grid; justify-items: center; gap: 2px; padding: .55rem .25rem; min-height: 56px; color: var(--tenue); text-decoration: none; font-size: .75rem; font-weight: 600; }
       .pestanas a.activo { color: var(--azul); }
     }`,
@@ -78,12 +78,17 @@ import { SelectorPreferencias } from '../shared/preferencias';
 export class Shell {
   i18n = inject(I18n);
   auth = inject(Auth);
-  items = [
-    { ruta: '/recomendar', icono: 'recomendar', clave: 'nav.recomendar' as const },
-    { ruta: '/pendientes', icono: 'pendientes', clave: 'nav.pendientes' as const },
-    { ruta: '/proveedores', icono: 'proveedores', clave: 'nav.proveedores' as const },
-    { ruta: '/panel', icono: 'panel', clave: 'nav.panel' as const },
-    { ruta: '/acerca', icono: 'libro', clave: 'nav.acerca' as const },
+  private todos = [
+    { ruta: '/recomendar', icono: 'recomendar', clave: 'nav.recomendar' as const, roles: ['solicitante', 'operador', 'gerencia'] },
+    { ruta: '/solicitudes', icono: 'lista', clave: 'nav.solicitudes' as const, roles: ['solicitante', 'operador', 'gerencia'] },
+    { ruta: '/pendientes', icono: 'pendientes', clave: 'nav.pendientes' as const, roles: ['operador', 'gerencia'] },
+    { ruta: '/proveedores', icono: 'proveedores', clave: 'nav.proveedores' as const, roles: ['operador', 'gerencia'] },
+    { ruta: '/panel', icono: 'panel', clave: 'nav.panel' as const, roles: ['operador', 'gerencia'] },
+    { ruta: '/avisos', icono: 'campana', clave: 'nav.avisos' as const, roles: ['operador', 'gerencia'] },
+    { ruta: '/acerca', icono: 'libro', clave: 'nav.acerca' as const, roles: ['solicitante', 'operador', 'gerencia'] },
   ];
+  /** Menú según el rol de la sesión. */
+  get items() { const r = this.auth.rol(); return this.todos.filter(n => r && n.roles.includes(r)); }
+  rolTexto = () => { const r = this.auth.rol(); return r ? this.i18n.t(('rol.' + r) as 'rol.operador') : ''; };
   inicial = () => (this.auth.usuario()?.nombre ?? '?').trim().charAt(0).toUpperCase();
 }

@@ -65,6 +65,26 @@ Detalle, decisiones y puntos de extensión en [`docs/ARQUITECTURA.md`](docs/ARQU
 Toda la API (salvo `/salud` y `/auth/login`) exige sesión; el usuario semilla es **solo de demostración** (ver `.env.example` para cambiarlo y fijar `COSCO_JWT_SECRET`).
 Sin Docker: `make api` y, en otra terminal, `make web-instalar && make web` (Node ≥ 22.12).
 
+## Roles y avisos por Slack
+
+Tres roles, con un usuario de demostración cada uno (misma contraseña del usuario semilla, `Cosco-2026!`):
+
+| Rol | Usuario | Qué puede hacer |
+|---|---|---|
+| **Solicitante** (comercial) | `comercial` | Pide recomendaciones, las ve y sigue el estado de **sus** solicitudes. No decide. |
+| **Operador** (operaciones) | `operador` | Todo lo anterior, más revisar los casos pendientes, decidir y cerrar servicios; ve proveedores, panel y el historial de avisos. |
+| **Gerencia** | `jurado` | Todo, además de decidir lo **escalado a gerencia** y activar o desactivar los avisos. |
+
+Los permisos los hace cumplir la API (HTTP 403), no solo el menú del frontend.
+
+**Avisos por Slack.** Cuando una recomendación necesita a una persona, se avisa **una sola vez por solicitud**: «revisión necesaria» al canal de operaciones y «escalamiento» al de gerencia, con corredor, motivos, la primera opción del modelo y un enlace al caso. Si Slack falla, la recomendación sigue su curso y el caso queda en «Pendientes»; el fallo se ve en el historial de la pantalla **Avisos**.
+
+1. En Slack crea un *Incoming Webhook* (api.slack.com/messaging/webhooks) para cada canal.
+2. Pon las URLs en tu `.env` (no se versiona): `COSCO_SLACK_WEBHOOK` para un solo canal, o `COSCO_SLACK_WEBHOOK_OPERACIONES` y `COSCO_SLACK_WEBHOOK_GERENCIA` para canales separados. Solo se aceptan URLs `https://hooks.slack.com/…`, y la API nunca las devuelve.
+3. Reinicia con `docker compose up -d`. En **Avisos** (gerencia) activas o desactivas cada tipo de aviso y envías un mensaje de prueba.
+
+Endpoints nuevos: `GET /mis-solicitudes`, `GET`/`PUT /notificaciones/ajustes`, `GET /notificaciones/historial`, `POST /notificaciones/probar`.
+
 ## Estructura
 
 ```

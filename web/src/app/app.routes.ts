@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { guardia } from './core/auth';
+import { guardia, rolGuardia } from './core/auth';
 
 export const routes: Routes = [
   { path: 'login', title: 'Login', loadComponent: () => import('./pages/login').then(m => m.Login) },
@@ -9,11 +9,13 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'recomendar' },
       { path: 'recomendar', loadComponent: () => import('./pages/recomendar').then(m => m.Recomendar) },
       { path: 'recomendar/:sid', loadComponent: () => import('./pages/recomendar').then(m => m.Recomendar) },
-      { path: 'pendientes', loadComponent: () => import('./pages/pendientes').then(m => m.Pendientes) },
-      { path: 'proveedores', loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
-      { path: 'proveedores/:id', loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
+      { path: 'solicitudes', loadComponent: () => import('./pages/solicitudes').then(m => m.Solicitudes) },
+      { path: 'avisos', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/avisos').then(m => m.Avisos) },
+      { path: 'pendientes', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/pendientes').then(m => m.Pendientes) },
+      { path: 'proveedores', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
+      { path: 'proveedores/:id', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
       { path: 'acerca', loadComponent: () => import('./pages/acerca').then(m => m.Acerca) },
-      { path: 'panel', loadComponent: () => import('./pages/panel').then(m => m.Panel) },
+      { path: 'panel', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/panel').then(m => m.Panel) },
     ],
   },
   { path: '**', redirectTo: '' },

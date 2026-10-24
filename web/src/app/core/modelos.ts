@@ -34,4 +34,12 @@ export interface Tablas {
   capacidad_snapshot: { proveedor_id: string; tipo_vehiculo_id: string; fecha_hora: string; unidades_disponibles: number }[];
   servicios: { proveedor_id: string; entrega_real: string | null; a_tiempo: number | null; estado: string; corredor_id: string }[];
 }
-export interface Sesion { access_token: string; expira_en: number; usuario: { usuario: string; nombre: string; rol: string } }
+export type Rol = 'solicitante' | 'operador' | 'gerencia';
+export interface MiSolicitud {
+  solicitud_id: string; solicitante: string; fecha: string; estado: 'lista' | 'en_revision' | 'escalada' | 'decidida';
+  proveedor_sugerido: string | null; proveedor_elegido: string | null; decidida_por: string | null; motivos: string[];
+}
+export interface AjustesAvisos { slack_activo: boolean; avisar_revision: boolean; avisar_escalamiento: boolean }
+export interface EstadoAvisos { ajustes: AjustesAvisos; webhooks: { operaciones: boolean; gerencia: boolean } }
+export interface Aviso { id: number; fecha: string; evento: string; solicitud_id: string | null; destino: string; estado: string; detalle: string }
+export interface Sesion { access_token: string; expira_en: number; usuario: { usuario: string; nombre: string; rol: Rol } }

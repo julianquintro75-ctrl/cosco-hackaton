@@ -19,6 +19,10 @@ URL = os.environ.get("COSCO_API_URL", "").rstrip("/")
 TIMEOUT = float(os.environ.get("COSCO_API_TIMEOUT", "60"))
 
 
+# En proceso (sin HTTP) no hay sesión: el usuario local actúa con rol de gerencia, igual que el modo de desarrollo de la API.
+_USUARIO_LOCAL = {"usuario": "local", "nombre": "Proceso local", "rol": "gerencia"}
+
+
 def modo() -> str:
     return f"http ({URL})" if URL else "en proceso"
 
@@ -68,13 +72,14 @@ def _api():
 
 def recomendar(sol: SolicitudIn) -> RecomendacionOut:
     if not URL:
-        return _api().recomendar(sol)
+        from fastapi import BackgroundTasks
+        return _api().recomendar(sol, BackgroundTasks(), _USUARIO_LOCAL)
     return RecomendacionOut.model_validate(_http("POST", "/recomendar", content=sol.model_dump_json(), headers={"Content-Type": "application/json"}).json())
 
 
 def decision(d: DecisionIn) -> dict:
     if not URL:
-        return _api().decision(d, {"usuario": d.usuario})
+        return _api().decision(d, {**_USUARIO_LOCAL, "usuario": d.usuario})
     return _http("POST", "/decision", content=d.model_dump_json(), headers={"Content-Type": "application/json"}).json()
 
 
@@ -111,7 +116,7 @@ def decision_de(sid: str) -> dict | None:
 
 
 def pendientes(filtro: str) -> list[tuple[RecomendacionOut, dict]]:
-    filas = _api().pendientes(filtro) if not URL else _http("GET", "/pendientes", params={"filtro": filtro}).json()
+    filas = _api().pendientes(filtro, _USUARIO_LOCAL) if not URL else _http("GET", "/pendientes", params={"filtro": filtro}).json()
     return [(RecomendacionOut.model_validate(f["recomendacion"]), f["solicitud"]) for f in filas]
 
 

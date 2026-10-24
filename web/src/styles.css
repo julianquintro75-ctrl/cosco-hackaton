@@ -87,6 +87,7 @@ a { color: var(--azul); }
 
 /* Aviso de estado */
 .aviso { display: flex; gap: .75rem; align-items: flex-start; padding: .9rem 1.1rem; border-radius: var(--r-tar); border: 1px solid; font-weight: 600; }
+.aviso.info { background: var(--azul-suave); color: var(--azul); border-color: color-mix(in srgb, var(--azul) 30%, transparent); }
 .aviso.ok { background: var(--ok-suave); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
 .aviso.ambar { background: var(--ambar-suave); color: var(--ambar); border-color: color-mix(in srgb, var(--ambar) 30%, transparent); }
 .aviso.rojo { background: var(--rojo-suave); color: var(--rojo-texto); border-color: color-mix(in srgb, var(--rojo) 35%, transparent); }

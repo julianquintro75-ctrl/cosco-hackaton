@@ -111,6 +111,15 @@ def sesion(u: Optional[dict] = Depends(exigir_sesion)) -> dict:
     return u or {"usuario": "dev", "nombre": "Desarrollo", "rol": "gerencia"}
 
 
+def exigir_rol(*roles: str):
+    """Dependencia: deja pasar solo a los roles indicados (403 para el resto). Con la autenticación apagada, el usuario de desarrollo es gerencia."""
+    def _dep(u: dict = Depends(sesion)) -> dict:
+        if u["rol"] not in roles:
+            raise HTTPException(403, f"Tu rol ({u['rol']}) no puede hacer esto")
+        return u
+    return _dep
+
+
 class LoginIn(BaseModel):
     usuario: str = Field(min_length=1, max_length=64)
     clave: str = Field(min_length=1, max_length=256)
