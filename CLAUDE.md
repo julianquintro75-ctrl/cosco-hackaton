@@ -36,4 +36,13 @@ python seed/en_vivo.py --dias 14 --pausa 3 --evento P03:0.6:2026-10-25
 ```
 
 ## Estado
-Pasos 0–2 hechos (esquema, contratos, datos semilla, validador, simulación en vivo). El trabajo empieza en el **paso 3** de `PASOS_Y_PROMPTS.md`; se ejecutan en orden, uno por uno.
+Pasos 0–14 hechos (ver `reportes/` y el historial de git, con mensajes en formato Conventional Commits). Configuración elegida en el backtest: vida media 30 días, λ = 0,5 (`engine/config_motor.json`). M1/M2 no mejoran la línea base bayesiana: el motor usa el bayesiano. Jev y el LLM están implementados en `bench/comparar.py` pero **no medidos** (falta clave de API).
+Pendiente humano: grabar el video de respaldo de 5 minutos siguiendo `docs/guion_demo.md`; medir B y C cuando haya `TYPESAFE_API_KEY` / `ANTHROPIC_API_KEY`.
+
+## Demo
+```
+bash scripts/preparar_demo.sh                                         # Mac/Linux
+powershell -ExecutionPolicy Bypass -File scripts\preparar_demo.ps1     # Windows
+python -m pytest -q                                                    # 30 pruebas
+python bench/comparar.py                                               # banco A vs Jev vs LLM
+```
