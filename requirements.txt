@@ -11,3 +11,5 @@ lightgbm
 scikit-learn
 shap
 tabulate
+httpx
+matplotlib
