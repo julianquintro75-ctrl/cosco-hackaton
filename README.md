@@ -11,7 +11,7 @@ Sistema de apoyo a la decisión para transporte terrestre en Colombia: para cada
 git clone <url-del-repo> && cd cosco-hackaton
 docker compose up --build
 ```
-API en <http://localhost:8000/docs> · Interfaz en <http://localhost:8501>. La primera vez genera los datos sintéticos (~1 min). Puertos configurables copiando `.env.example` a `.env`.
+**Frontend Angular en <http://localhost:4200>** (inicia sesión con el usuario de demostración que muestra la pantalla de acceso: `jurado` / `Cosco-2026!`) · API en <http://localhost:8000/docs> · interfaz Streamlit alterna en <http://localhost:8501>. La primera vez genera los datos sintéticos (~1 min). Puertos configurables copiando `.env.example` a `.env`.
 
 **Sin Docker (Python 3.10+):**
 ```bash
@@ -59,10 +59,17 @@ Detalle, decisiones y puntos de extensión en [`docs/ARQUITECTURA.md`](docs/ARQU
 | `POST /cierre` | Registra el resultado real del servicio |
 | `GET /proveedores/{id}/ficha` | Ficha e Índice de Dureza |
 
+## Frontend Angular, idiomas y acceso
+
+`web/` contiene una interfaz Angular en **español, inglés y chino (简体中文)** con inicio de sesión (JWT, contraseñas con PBKDF2, bloqueo tras 5 intentos fallidos) y los colores de COSCO SHIPPING. Detalle en [`web/README.md`](web/README.md).
+Toda la API (salvo `/salud` y `/auth/login`) exige sesión; el usuario semilla es **solo de demostración** (ver `.env.example` para cambiarlo y fijar `COSCO_JWT_SECRET`).
+Sin Docker: `make api` y, en otra terminal, `make web-instalar && make web` (Node ≥ 22.12).
+
 ## Estructura
 
 ```
-app/        API (FastAPI) · interfaz y tableros (Streamlit)
+app/        API (FastAPI, con autenticación) · interfaz y tableros (Streamlit)
+web/        frontend Angular (es · en · zh)
 engine/     estadística, fichas, modelos, motor A, configuración
 contratos/  contratos pydantic (fuente de verdad, con db/schema.sql)
 seed/       generador sintético, 35 reglas de calidad, simulador en vivo
@@ -74,7 +81,7 @@ docs/       arquitectura, revisión, guion de demo, referencias, imágenes
 
 ## Extender sin reescribir
 
-- **La UI solo habla con la API** (`app/cliente_api.py`); otro frontend puede hacer lo mismo.
+- **Los frontends solo hablan con la API** (Angular por HTTP con sesión; Streamlit vía `app/cliente_api.py`); otro frontend puede hacer lo mismo.
 - **La base de datos está detrás de un puerto** (`engine/repositorio.py`): para PostgreSQL u otra se escribe una clase, se registra con `registrar_backend` y se apunta `COSCO_REPO`; `tests/test_repositorio.py` define el contrato.
 - **Reentrenamiento nocturno** de M1/M2 (`docker compose --profile ml up -d` o `make reentrenar`): publica un candidato solo si supera a la estadística bayesiana y lo deja pendiente de aprobación humana.
 
