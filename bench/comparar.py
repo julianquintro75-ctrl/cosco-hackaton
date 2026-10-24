@@ -25,6 +25,20 @@ from engine.datos import Base, DB_DEFECTO, cargar_config
 from engine.motor_a import MotorA, cop
 from backtest import CAMPOS, costo_real          # verdad oculta: SOLO para evaluar
 
+def _cargar_env(ruta: Path) -> None:
+    """Lee KEY=valor de .env sin pisar variables ya definidas (sin dependencias; el .env no se versiona)."""
+    if not ruta.is_file():
+        return
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if linea and not linea.startswith("#") and "=" in linea:
+            k, v = linea.split("=", 1)
+            if v.strip().strip("\"'"):
+                os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
+
+
+_cargar_env(RAIZ / ".env")
+
 PRECIO_JEV_USD_MTOK = 0.042        # precio publicado por TypeSafe (entrada; salida gratis)
 PRECIO_LLM_USD_MTOK = (3.0, 15.0)  # hipotetico (entrada, salida) hasta fijar el modelo real; ver seccion 13.4 del PDF
 
