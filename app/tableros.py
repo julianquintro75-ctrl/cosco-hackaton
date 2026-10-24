@@ -3,7 +3,7 @@ Pestañas: Precios · Tiempos de tránsito · Capacidad · Disponibilidad de veh
 Paleta única y accesible: azul secuencial para magnitudes, azul↔rojo con gris al centro para el índice de precio,
 máximo 3 proveedores en color a la vez (el resto en gris) y alertas siempre con ícono + texto. Datos sintéticos."""
 from __future__ import annotations
-import json, sqlite3, sys
+import json, sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from scipy.stats import beta as beta_dist
 
-from engine.estadisticas import Estadisticas
+from app import cliente_api as cli_api
 from engine.fichas import ficha
 
 SERIE = ["#2a78d6", "#eb6834", "#1baf7a"]          # slots categoricos 1-3 (validados todos-contra-todos)
@@ -245,8 +245,7 @@ def render(E):
         fig.add_hline(y=0.25, line_dash="dash", line_color=CRITICO, annotation_text="alerta 0,25")
         fig.update_yaxes(title="HHI = Σ cuota²", rangemode="tozero")
         st.plotly_chart(estilo(fig, 330, f"Índice Herfindahl: {hhi.iloc[-1]:.3f} en el último mes ({'⚠ concentrado' if hhi.iloc[-1] > 0.25 else 'por debajo de 0,25'})"), width="stretch")
-        con = sqlite3.connect(E.db)
-        dec = pd.read_sql("SELECT d.*, r.top3_y_desglose FROM decision d JOIN recomendacion r USING(recomendacion_id)", con)
+        dec = cli_api.tablero_decisiones()
         a, b, c = st.columns(3)
         if dec.empty:
             a.metric("Decisiones con el sistema", 0); st.info("Todavía no hay decisiones tomadas con el sistema: aprueba casos en «Nueva solicitud» o corre scripts/demo_api.py.")
@@ -257,9 +256,7 @@ def render(E):
             if len(mot):
                 fig = go.Figure(go.Bar(x=mot.values, y=mot.index, orientation="h", marker_color=SERIE[0], text=mot.values, textposition="outside"))
                 st.plotly_chart(estilo(fig, 260, "Motivos al elegir otro proveedor"), width="stretch")
-            cerr = pd.read_sql("""SELECT d.solicitud_id, d.proveedor_elegido, s.costo_final, s.a_tiempo, r.top3_y_desglose, so.nivel_servicio FROM decision d
-                                  JOIN recomendacion r USING(recomendacion_id) JOIN servicio s ON s.solicitud_id=d.solicitud_id AND s.proveedor_id=d.proveedor_elegido
-                                  JOIN solicitud so ON so.solicitud_id=d.solicitud_id WHERE s.estado='ENTREGADO'""", con)
+            cerr = cli_api.tablero_cierres()
             if len(cerr):
                 filas = []
                 for r in cerr.itertuples():
@@ -276,5 +273,5 @@ def render(E):
 
 if __name__ == "__main__":
     st.set_page_config(page_title="Tableros COSCO", page_icon="📊", layout="wide")
-    from app import api
-    render(api.estado())
+    from app import contexto
+    render(contexto.cargar())

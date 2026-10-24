@@ -10,7 +10,6 @@ Para cada combinacion, usando SOLO servicios con entrega_real <= as_of:
 Respaldo cuando no hay datos: 'corredor' (la combinacion exacta) -> 'corredor_cualquier_carga' -> 'proveedor' -> 'global'.
 Nunca lee verdad_oculta.csv."""
 from __future__ import annotations
-from datetime import datetime
 import numpy as np
 import pandas as pd
 from scipy.stats import beta as beta_dist
@@ -223,12 +222,6 @@ COLS_TABLA = ["proveedor_id", "corredor_id", "tipo_carga", "alfa", "beta", "p_ta
               "n_servicios", "tasa_incidente", "indice_dureza", "actualizado", "nivel_respaldo"]
 
 
-def _asegurar_columna(con):
-    cols = [r[1] for r in con.execute("PRAGMA table_info(estadistica_proveedor)")]
-    if "nivel_respaldo" not in cols:   # columna agregada al esquema en el paso 4 (ver db/schema.sql)
-        con.execute("ALTER TABLE estadistica_proveedor ADD COLUMN nivel_respaldo TEXT")
-
-
 def calcular(as_of, vida_media=None, db=None, escribir=True, base: Base | None = None) -> pd.DataFrame:
     """Recalcula y (por defecto) escribe la tabla estadistica_proveedor con lo que se sabia en as_of."""
     base = base or (Base(db) if db else base_compartida())
@@ -236,12 +229,7 @@ def calcular(as_of, vida_media=None, db=None, escribir=True, base: Base | None =
     df = est.tabla(as_of, vida_media)
     df["actualizado"] = pd.Timestamp(as_of).isoformat(timespec="minutes")
     if escribir:
-        con = base.conectar()
-        _asegurar_columna(con)
-        con.execute("DELETE FROM estadistica_proveedor")
-        con.executemany(f"INSERT INTO estadistica_proveedor ({','.join(COLS_TABLA)}) VALUES ({','.join('?' * len(COLS_TABLA))})",
-                        [tuple(None if (isinstance(v, float) and np.isnan(v)) else v for v in r) for r in df[COLS_TABLA].itertuples(index=False)])
-        con.commit(); con.close()
+        base.repo.reemplazar_estadisticas(df[COLS_TABLA])
     return df
 
 
@@ -252,18 +240,16 @@ def actualizar_con_servicio(cierre, db=None, base: Base | None = None, cfg: dict
     cfg = cfg or cargar_config()
     c = cierre if isinstance(cierre, dict) else cierre.model_dump()
     base = base or (Base(db) if db else base_compartida())
-    con = base.conectar(); _asegurar_columna(con)
-    r = con.execute("""SELECT s.proveedor_id, so.corredor_id, so.tipo_carga FROM servicio s JOIN solicitud so USING(solicitud_id)
-                       WHERE s.servicio_id=?""", (c["servicio_id"],)).fetchone()
-    if r is None:
-        con.close(); raise KeyError(f"servicio {c['servicio_id']} no existe")
-    pid, cor, carga = r
+    repo = base.repo
+    ctx = repo.contexto_servicio(c["servicio_id"])
+    if ctx is None:
+        raise KeyError(f"servicio {c['servicio_id']} no existe")
+    pid, cor, carga = ctx
     t = pd.Timestamp(c["entrega_real"])
     A0, B0, hl = cfg["prior_alfa"], cfg["prior_beta"], cfg["vida_media_dias"]
-    fila = con.execute("SELECT alfa, beta, n_servicios, tasa_incidente, actualizado FROM estadistica_proveedor WHERE proveedor_id=? AND corredor_id=? AND tipo_carga=?",
-                       (pid, cor, carga)).fetchone()
+    fila = repo.estadistica(pid, cor, carga)
     if fila:
-        alfa, bet, n, tinc, act = fila
+        alfa, bet, n, tinc, act = fila["alfa"], fila["beta"], fila["n_servicios"], fila["tasa_incidente"], fila["actualizado"]
         dec = 0.5 ** (max((t - pd.Timestamp(act)).total_seconds() / 86400, 0) / hl)
         ev_ok, ev_late = (alfa - A0) * dec, (bet - B0) * dec
     else:
@@ -275,13 +261,8 @@ def actualizar_con_servicio(cierre, db=None, base: Base | None = None, cfg: dict
     nw = ev_ok + ev_late; F = cfg["prior_incidente_fuerza"]
     inc_prev = max(tinc * (nw - 1 + F) - cfg["prior_incidente_tasa"] * F, 0)
     tinc = (inc_prev + int(bool(c.get("hubo_incidente"))) + cfg["prior_incidente_tasa"] * F) / (nw + F)
-    con.execute("""INSERT INTO estadistica_proveedor (proveedor_id, corredor_id, tipo_carga, alfa, beta, p_tarde, ic90_ancho, n_servicios, tasa_incidente, actualizado, nivel_respaldo)
-                   VALUES (?,?,?,?,?,?,?,?,?,?, 'corredor')
-                   ON CONFLICT(proveedor_id, corredor_id, tipo_carga) DO UPDATE SET alfa=excluded.alfa, beta=excluded.beta, p_tarde=excluded.p_tarde,
-                   ic90_ancho=excluded.ic90_ancho, n_servicios=excluded.n_servicios, tasa_incidente=excluded.tasa_incidente,
-                   actualizado=excluded.actualizado, nivel_respaldo='corredor'""",
-                (pid, cor, carga, alfa, bet, p, hi - lo, (n or 0) + 1, tinc, t.isoformat(timespec="minutes")))
-    con.commit(); con.close()
+    repo.guardar_estadistica(dict(proveedor_id=pid, corredor_id=cor, tipo_carga=carga, alfa=alfa, beta=bet, p_tarde=p, ic90_ancho=hi - lo,
+                                  n_servicios=(n or 0) + 1, tasa_incidente=tinc, actualizado=t.isoformat(timespec="minutes")))
     return dict(proveedor_id=pid, corredor_id=cor, tipo_carga=carga, p_tarde=p, ic90_ancho=hi - lo, n_servicios=(n or 0) + 1)
 
 

@@ -234,12 +234,11 @@ class MotorA(MotorDecision):
 
 
 if __name__ == "__main__":   # demostracion rapida
-    import sqlite3, sys
-    from engine.datos import DB_DEFECTO
+    import sys
+    from engine.repositorio import crear_repositorio
     sid = sys.argv[1] if len(sys.argv) > 1 else None
-    con = sqlite3.connect(DB_DEFECTO)
-    q = "SELECT * FROM solicitud WHERE fase='prueba' AND tipo_carga='general' AND corredor_id='C1' ORDER BY solicitud_id LIMIT 1" if not sid else f"SELECT * FROM solicitud WHERE solicitud_id='{sid}'"
-    r = dict(zip([c[0] for c in con.execute(q).description], con.execute(q).fetchone()))
+    repo = crear_repositorio()
+    r = repo.solicitud(sid) if sid else next(x for x in repo.solicitudes_prueba() if x["tipo_carga"] == "general" and x["corredor_id"] == "C1")
     m = MotorA()
     for nivel in ("Flexible", "Estandar", "Urgente"):
         sol = SolicitudIn(**{k: r[k] for k in ("solicitud_id", "cliente_id", "corredor_id", "tipo_vehiculo_req", "tipo_carga", "peso_ton", "fecha_cargue", "plazo_entrega", "tarifa_cliente")},

@@ -1,14 +1,14 @@
-"""Acceso a la base SQLite: carga una sola vez las tablas que usa el motor y las deja en memoria (pandas/numpy).
+"""Acceso a datos: carga una sola vez las tablas que usa el motor y las deja en memoria (pandas/numpy).
 Nunca lee data/verdad_oculta.csv. Se invalida con Base.invalidar() cuando entra un cierre nuevo."""
 from __future__ import annotations
-import json, sqlite3
+import json
 from functools import lru_cache
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-RAIZ = Path(__file__).resolve().parent.parent
-DB_DEFECTO = RAIZ / "data" / "cosco.db"
+from engine.repositorio import DB_DEFECTO, RAIZ, Repositorio, crear_repositorio  # noqa: F401  (se reexportan)
+
 CONFIG_DEFECTO = Path(__file__).resolve().parent / "config_motor.json"
 
 
@@ -19,38 +19,33 @@ def cargar_config(ruta: str | Path | None = None, **sobrescribir) -> dict:
 
 
 class Base:
-    """Instantanea en memoria de la base. Todas las consultas con as_of se resuelven filtrando aqui (sin ver el futuro)."""
+    """Instantanea en memoria de la base. Todas las consultas con as_of se resuelven filtrando aqui (sin ver el futuro).
+    Se alimenta de un `Repositorio` (SQLite por omision), de modo que no depende del motor de base de datos."""
 
-    def __init__(self, db: str | Path | None = None):
-        self.db = str(db or DB_DEFECTO)
+    def __init__(self, db: str | Path | Repositorio | None = None, tablas: dict[str, pd.DataFrame] | None = None):
+        """`db`: ruta/URL (se resuelve con crear_repositorio) o un Repositorio ya creado. `tablas`: alternativa sin repositorio
+        (p. ej. las que entrega la API por HTTP a la interfaz)."""
+        self.repo = None if tablas is not None else (db if isinstance(db, Repositorio) else crear_repositorio(db))
+        self._tablas_dadas = tablas
+        self.db = self.repo.descripcion if self.repo else "remoto"
         self.cargar()
 
-    def conectar(self) -> sqlite3.Connection:
-        con = sqlite3.connect(self.db)
-        con.execute("PRAGMA foreign_keys = ON")
-        return con
-
     def cargar(self):
-        con = self.conectar()
-        q = lambda s: pd.read_sql(s, con)
-        self.proveedores = q("SELECT * FROM proveedor ORDER BY proveedor_id")
+        T = self._tablas_dadas if self._tablas_dadas is not None else self.repo.tablas_base()
+        self.proveedores = T["proveedor"].sort_values("proveedor_id").reset_index(drop=True)
         self.nombres = dict(zip(self.proveedores.proveedor_id, self.proveedores.nombre))
-        self.corredores = q("SELECT * FROM corredor ORDER BY corredor_id").set_index("corredor_id")
-        self.vehiculos = q("SELECT * FROM tipo_vehiculo").set_index("tipo_vehiculo_id")
-        self.certs = q("SELECT * FROM certificacion")
-        self.flota = q("SELECT * FROM flota")
-        self.clientes = q("SELECT * FROM cliente").set_index("cliente_id")
-        t = q("SELECT * FROM tarifa")
+        self.corredores = T["corredor"].sort_values("corredor_id").set_index("corredor_id")
+        self.vehiculos = T["tipo_vehiculo"].set_index("tipo_vehiculo_id")
+        self.certs = T["certificacion"]
+        self.flota = T["flota"]
+        self.clientes = T["cliente"].set_index("cliente_id")
+        t = T["tarifa"].copy()
         t["desde"] = pd.to_datetime(t.vigente_desde); t["hasta"] = pd.to_datetime(t.vigente_hasta)
         self.tarifas = t
-        c = q("SELECT * FROM capacidad_snapshot")
+        c = T["capacidad_snapshot"].copy()
         c["fh"] = pd.to_datetime(c.fecha_hora)
         self.capacidad = c.sort_values("fh")
-        s = q("""SELECT s.servicio_id, s.solicitud_id, s.proveedor_id, s.precio_pactado, s.cargue_real, s.entrega_planeada,
-                        s.entrega_real, s.a_tiempo, s.costo_final, s.estado, so.corredor_id, so.tipo_carga, so.nivel_servicio,
-                        so.fecha_cargue, so.fecha_solicitud, so.plazo_entrega, so.tipo_vehiculo_req,
-                        EXISTS (SELECT 1 FROM evento_servicio e WHERE e.servicio_id=s.servicio_id AND e.tipo IN ('INCIDENTE','DANO')) AS incidente
-                 FROM servicio s JOIN solicitud so USING(solicitud_id)""")
+        s = T["servicios"].copy()
         for col in ("entrega_real", "fecha_cargue", "entrega_planeada", "plazo_entrega", "fecha_solicitud"):
             s[col] = pd.to_datetime(s[col])
         s["transito_h"] = (s.entrega_real - s.fecha_cargue).dt.total_seconds() / 3600
@@ -62,7 +57,6 @@ class Base:
         # arreglos numpy para filtrar rapido por as_of
         self._t_ent = self.entregados.entrega_real.values.astype("datetime64[m]")
         self.cancelados = s[s.estado.isin(["CANCELADO", "RECHAZADO"])].copy()
-        con.close()
         # indices en diccionarios para consultas rapidas
         self._tar = {}
         for r in t.sort_values("desde").itertuples():

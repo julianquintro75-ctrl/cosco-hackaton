@@ -1,8 +1,8 @@
 """Paso 8 · Interfaz del operador (Streamlit). Arranque: streamlit run app/ui.py
 Pantallas: Nueva solicitud · Revisión · Gerencia · Tableros. Usa la misma lógica que la API (en proceso) y la misma base (COSCO_DB)."""
 from __future__ import annotations
-import json, sqlite3, sys, uuid
-from datetime import datetime, time as dtime, timedelta
+import sys, uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -12,11 +12,12 @@ import plotly.graph_objects as go
 import streamlit as st
 from fastapi import HTTPException
 
-from app import api
+from app import cliente_api as cli_api, contexto
 from contratos.contracts import DecisionIn, RecomendacionOut, SolicitudIn
 
 st.set_page_config(page_title="Recomendador COSCO", page_icon="🚚", layout="wide")
 st.markdown("""<style>
+.top3-caja{overflow-x:auto}.top3{width:100%;border-collapse:collapse;font-size:.9rem}.top3 th,.top3 td{padding:6px 8px;border-bottom:1px solid rgba(128,128,128,.25);text-align:left;vertical-align:top}.top3 th{font-weight:600;opacity:.75}
 html, body, [class*="css"] { font-size: 19px; }
 h1 { font-size: 2.0rem !important; } h2 { font-size: 1.6rem !important; } h3 { font-size: 1.3rem !important; }
 div[data-testid="stDataFrame"] div { font-size: 18px; }
@@ -33,6 +34,11 @@ COMP = [("precio", "Precio", "#1f4e79"), ("retraso_esperado", "Retraso esperado"
         ("incertidumbre", "Incertidumbre", "#8c8c8c"), ("concentracion", "Concentración", "#5b8e7d")]
 
 
+def _md(t: str) -> str:
+    """Escapa «$» para que Streamlit no lo interprete como LaTeX (los montos van en COP)."""
+    return str(t).replace("$", "\\$")
+
+
 def cop(x) -> str:
     return "$" + f"{int(round(x)):,}".replace(",", ".")
 
@@ -41,23 +47,21 @@ def millones(x) -> str:
     return f"${x/1e6:,.2f} M".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-E = api.estado()
+@st.cache_resource(ttl=300, show_spinner="Cargando datos desde la API…")
+def _contexto():
+    return contexto.cargar()
+
+
+E = _contexto()
 B = E.base
 NOM_COR = {c: f"{c} · {r.origen} → {r.destino} ({r.distancia_km:g} km)" for c, r in B.corredores.iterrows()}
 NOM_VEH = {v: f"{v} · {r.nombre}" for v, r in B.vehiculos.iterrows()}
 
 
-def con():
-    return sqlite3.connect(E.db)
-
-
 def solicitud_de_bd(sid: str) -> dict | None:
-    c = con(); c.row_factory = sqlite3.Row
-    r = c.execute("SELECT * FROM solicitud WHERE solicitud_id=?", (sid,)).fetchone()
-    return dict(r) if r else None
+    return cli_api.solicitud(sid)
 
 
-# ---------------- vista de una recomendación (reutilizada en las tres pantallas) ----------------
 def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str = "operador"):
     fc = pd.Timestamp(sol["fecha_cargue"]); H = (pd.Timestamp(sol["plazo_entrega"]) - fc).total_seconds() / 3600
     st.markdown(f"<div class='top-linea'><b>Solicitud {rec.solicitud_id}</b> · {NOM_COR[sol['corredor_id']]} · {NOM_VEH[sol['tipo_vehiculo_req']]} · "
@@ -77,7 +81,7 @@ def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str
                           "P(a tiempo) · IC 90 %": f"{p.p_a_tiempo:.0%} ({p.ic90_p_a_tiempo[0]:.0%}–{p.ic90_p_a_tiempo[1]:.0%}) · {p.n_servicios_corredor} serv.",
                           "Dureza": BANDA[p.banda_dureza] + (f" {p.indice_dureza:.1f}" if p.indice_dureza is not None else ""),
                           "Costo esperado": millones(p.costo_esperado), "Margen": millones(p.margen_esperado)})
-        st.dataframe(pd.DataFrame(filas), hide_index=True, width="stretch")
+        st.markdown("<div class='top3-caja'>" + pd.DataFrame(filas).to_html(index=False, escape=True, classes="top3", border=0) + "</div>", unsafe_allow_html=True)
         izq, der = st.columns([3, 2])
         with izq:
             st.markdown("**Alertas y por qué**")
@@ -88,9 +92,9 @@ def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str
                     if not p.alertas:
                         st.info("Sin alertas")
                     for f in p.factores_clave:
-                        st.markdown(f"- {f}")
+                        st.markdown(f"- {_md(f)}")
             if rec.explicacion_texto:
-                st.info(rec.explicacion_texto)
+                st.info(_md(rec.explicacion_texto))
         with der:
             fig = go.Figure()
             nombres = [f"#{p.posicion} {p.nombre}" for p in rec.ranking][::-1]
@@ -103,15 +107,14 @@ def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str
     if rec.descartados:
         st.markdown("**Descartados por reglas duras:** " + " · ".join(f"{B.nombres[d.proveedor_id]} ({d.motivo.replace('_', ' ')}: {d.detalle})" for d in rec.descartados))
     if rec.sugerencia_prueba:
-        st.info(f"🧪 Sugerencia de prueba (aparte del ranking): {rec.sugerencia_prueba.razon}")
+        st.info(f"🧪 Sugerencia de prueba (aparte del ranking): {_md(rec.sugerencia_prueba.razon)}")
     decidir(rec, sol, clave, rol)
 
 
 def decidir(rec: RecomendacionOut, sol: dict, clave: str, rol: str):
-    c = con()
-    ya = c.execute("SELECT proveedor_elegido, acepto_recomendacion, motivo, usuario FROM decision WHERE solicitud_id=? AND recomendacion_id IS NOT NULL", (rec.solicitud_id,)).fetchone()
+    ya = cli_api.decision_de(rec.solicitud_id)
     if ya:
-        st.success(f"Decisión registrada: {B.nombres[ya[0]]} · {'aceptó la recomendación' if ya[1] else 'eligió otro (' + MOTIVOS.get(ya[2], ya[2]) + ')'} · usuario {ya[3]}")
+        st.success(f"Decisión registrada: {B.nombres[ya['proveedor_elegido']]} · {'aceptó la recomendación' if ya['acepto_recomendacion'] else 'eligió otro (' + MOTIVOS.get(ya['motivo'], ya['motivo']) + ')'} · usuario {ya['usuario']}")
         return
     usuario = st.text_input("Usuario", value=rol, key=f"u_{clave}")
     col1, col2 = st.columns(2)
@@ -128,7 +131,7 @@ def decidir(rec: RecomendacionOut, sol: dict, clave: str, rol: str):
 
 def registrar(d: DecisionIn):
     try:
-        r = api.decision(d)
+        r = cli_api.decision(d)
         st.session_state["aviso"] = f"Decisión guardada · servicio {r['servicio_id']} asignado a {B.nombres[d.proveedor_elegido]} por {cop(r['precio_pactado'])}"
         st.rerun()
     except HTTPException as e:
@@ -136,23 +139,13 @@ def registrar(d: DecisionIn):
 
 
 def pendientes(filtro: str) -> list[tuple[RecomendacionOut, dict]]:
-    c = con()
-    filas = c.execute("""SELECT r.top3_y_desglose FROM recomendacion r WHERE NOT EXISTS (SELECT 1 FROM decision d WHERE d.solicitud_id=r.solicitud_id AND d.recomendacion_id IS NOT NULL)
-                         ORDER BY r.fecha DESC LIMIT 200""").fetchall()
-    out = []
-    for (j,) in filas:
-        rec = RecomendacionOut.model_validate_json(j)
-        if (filtro == "revision" and rec.requiere_revision and not rec.escalar_gerencia) or (filtro == "gerencia" and rec.escalar_gerencia):
-            s = solicitud_de_bd(rec.solicitud_id)
-            if s: out.append((rec, s))
-    return out
+    return cli_api.pendientes(filtro)
 
 
 # ---------------- pantallas ----------------
 def pantalla_nueva():
     st.header("Nueva solicitud")
-    c = con(); c.row_factory = sqlite3.Row
-    ej = [dict(r) for r in c.execute("SELECT * FROM solicitud WHERE fase='prueba' ORDER BY solicitud_id")]
+    ej = cli_api.solicitudes_prueba()
     idx = {f"{r['solicitud_id']} · {r['corredor_id']} {r['tipo_vehiculo_req']} {r['tipo_carga']} {r['nivel_servicio']}": r for r in ej}
     base = idx[st.selectbox("Cargar un caso de la fase de prueba (1–15 oct 2026) como plantilla", list(idx))] if idx else {}
     with st.form("sol"):
@@ -184,7 +177,7 @@ def pantalla_nueva():
             sol = SolicitudIn(solicitud_id=f"N-{uuid.uuid4().hex[:8]}", cliente_id=cliente, corredor_id=corredor, tipo_vehiculo_req=vehiculo, tipo_carga=carga,
                               peso_ton=peso, mercancia_peligrosa=peligrosa, fecha_cargue=fc, plazo_entrega=fc + timedelta(hours=plazo_h), nivel_servicio=nivel,
                               tarifa_cliente=int(tarifa), as_of=datetime.combine(asof_d, asof_t))
-            st.session_state["rec"] = api.recomendar(sol).model_dump_json()
+            st.session_state["rec"] = cli_api.recomendar(sol).model_dump_json()
             st.session_state["sol_id"] = sol.solicitud_id
         except HTTPException as e:
             st.error(e.detail)
