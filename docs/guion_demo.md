@@ -46,6 +46,14 @@ Usa dos ventanas (una normal y una de incógnito) para ver a dos personas a la v
 
 **Qué decir:** «Cuando la tarifa no cubre el costo esperado, la decisión sube. El operador no puede saltarse esa regla, y llega un aviso al canal de gerencia.»
 
+## Escena 3c · Seguimiento en ruta (1 min, opcional)
+
+**Clic:** con un servicio ya aprobado, **Seguimiento** (cualquier rol; el solicitante ve solo lo suyo). Elegir el servicio, **Reproducir**, subir a 4×.
+
+**Qué se ve:** el camión recorre el corredor, la barra avanza y el estado dice «Llegaría a tiempo/tarde» frente al plazo. Arriba, un aviso dice que es una **simulación**.
+
+**Qué decir:** «Hoy no hay GPS, así que simulamos el recorrido con el tránsito de cada proveedor. La pantalla ya está lista para recibir GPS real o Google Maps: solo se cambia la fuente de datos o el mapa, no la pantalla (`docs/SEGUIMIENTO.md`).»
+
 ## Escena 3b · Qué pasa si llegan dos solicitudes (o dos decisiones) a la vez (2 min)
 
 **Clic:** en la terminal, `python scripts/demo_concurrencia.py` (usa la base de demostración; crea solicitudes nuevas).

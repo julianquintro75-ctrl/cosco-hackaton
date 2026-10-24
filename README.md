@@ -56,6 +56,7 @@ Detalle, decisiones y puntos de extensión en [`docs/ARQUITECTURA.md`](docs/ARQU
 | `GET /salud` | Estado del servicio y de los datos |
 | `POST /recomendar` | Solicitud → Top-3, descartados, alertas, explicación |
 | `POST /solicitudes` | Crea una solicitud nueva (cliente, corredor, vehículo, peso, plazo); idempotente por `clave_envio` |
+| `GET /seguimiento` | Servicios en ruta con su recorrido (simulado hoy); el solicitante solo ve los suyos |
 | `POST /decision` | Registra qué decidió la persona (y por qué si se aparta) |
 | `POST /cierre` | Registra el resultado real del servicio |
 | `GET /proveedores/{id}/ficha` | Ficha e Índice de Dureza |
@@ -92,6 +93,8 @@ Endpoints nuevos: `GET /mis-solicitudes`, `GET`/`PUT /notificaciones/ajustes`, `
 - **Devolver al solicitante** (`POST /rechazo`, operador o gerencia; lo escalado, solo gerencia): motivo obligatorio y nota; el solicitante lo ve como «Devuelta» y puede crear una nueva con los mismos datos. Consulta: `GET /rechazos/{sid}`.
 - **Dos a la vez**: una solicitud solo puede decidirse o devolverse una vez, la capacidad comprometida se descuenta y un doble envío crea una sola solicitud. Tabla completa en [`docs/CASOS_BORDE.md`](docs/CASOS_BORDE.md); demo en vivo con `python scripts/demo_concurrencia.py`.
 - Guion de la demostración por roles: [`docs/guion_demo.md`](docs/guion_demo.md).
+
+- **Seguimiento en ruta** (pantalla propia, simulada, con mapa intercambiable): [`docs/SEGUIMIENTO.md`](docs/SEGUIMIENTO.md).
 
 ## Estructura
 

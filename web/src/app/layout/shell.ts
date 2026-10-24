@@ -82,6 +82,7 @@ export class Shell {
     { ruta: '/nueva', icono: 'mas', clave: 'nav.nueva' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/recomendar', icono: 'recomendar', clave: 'nav.recomendar' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/solicitudes', icono: 'lista', clave: 'nav.solicitudes' as const, roles: ['solicitante', 'operador', 'gerencia'] },
+    { ruta: '/seguimiento', icono: 'mapa', clave: 'nav.seguimiento' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/pendientes', icono: 'pendientes', clave: 'nav.pendientes' as const, roles: ['operador', 'gerencia'] },
     { ruta: '/proveedores', icono: 'proveedores', clave: 'nav.proveedores' as const, roles: ['operador', 'gerencia'] },
     { ruta: '/panel', icono: 'panel', clave: 'nav.panel' as const, roles: ['operador', 'gerencia'] },

@@ -264,6 +264,28 @@ class RepositorioSQLite:
         finally:
             con.close()
 
+    def servicios_en_seguimiento(self, recientes: int = 6) -> list[dict]:
+        """Servicios para la pantalla de seguimiento: todos los EN_CURSO y, como repetición, el último entregado
+        de la fase de prueba en cada corredor (hasta `recientes`). Incluye el tránsito estimado del proveedor."""
+        con = self._con(); con.row_factory = sqlite3.Row
+        sel = """SELECT s.servicio_id, s.solicitud_id, s.proveedor_id, p.nombre AS proveedor, so.corredor_id, c.origen, c.destino, c.distancia_km,
+                        so.tipo_carga, so.fecha_cargue, so.plazo_entrega, so.nivel_servicio, s.cargue_real, s.entrega_real, s.entrega_planeada,
+                        s.a_tiempo, s.estado, e.transito_p50_h, e.transito_p90_h, e.p_tarde
+                 FROM servicio s JOIN solicitud so USING(solicitud_id) JOIN proveedor p ON p.proveedor_id = s.proveedor_id
+                 JOIN corredor c ON c.corredor_id = so.corredor_id
+                 LEFT JOIN estadistica_proveedor e ON e.proveedor_id = s.proveedor_id AND e.corredor_id = so.corredor_id AND e.tipo_carga = so.tipo_carga"""
+        try:
+            en_curso = [dict(r) for r in con.execute(sel + " WHERE s.estado='EN_CURSO' ORDER BY so.fecha_cargue")]
+            hechos = [dict(r) for r in con.execute(sel + """ WHERE s.estado='ENTREGADO' AND so.fase='prueba' AND s.cargue_real IS NOT NULL
+                       AND s.entrega_real IS NOT NULL ORDER BY s.entrega_real DESC""")]
+        finally:
+            con.close()
+        vistos, rep = set(), []
+        for h in hechos:
+            if h["corredor_id"] not in vistos and len(rep) < recientes:
+                vistos.add(h["corredor_id"]); rep.append(h)
+        return en_curso + rep
+
     def reemplazar_estadisticas(self, df: pd.DataFrame) -> None:
         import numpy as np
         con = self._con()

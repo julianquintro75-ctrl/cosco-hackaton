@@ -26,6 +26,10 @@ const RUTAS: Record<string, string> = {
   campana: 'M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0',
   lista: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
   mas: 'M12 5v14M5 12h14',
+  mapa: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+  play: 'M7 5v14l11-7z',
+  pausa: 'M8 5v14M16 5v14',
+  reiniciar: 'M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4',
   llave: 'M14 10a4 4 0 1 0-3.9 4H12l1.5 1.5L15 14l1.5 1.5L18 14l-1.3-1.3A4 4 0 0 0 14 10z',
 };
 

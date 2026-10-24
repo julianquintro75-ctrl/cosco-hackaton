@@ -28,6 +28,7 @@ from engine.estadisticas import actualizar_con_servicio
 from engine.fichas import ficha
 from engine.repositorio import DB_DEFECTO
 from engine.motor_a import MotorA, as_of_de
+from engine import ubicacion
 
 ISO = "%Y-%m-%dT%H:%M"
 
@@ -324,6 +325,46 @@ def rechazo(r: RechazoIn, u: dict = Depends(auth.exigir_rol("operador", "gerenci
 @app.get("/rechazos/{sid}")
 def rechazo_de(sid: str):
     return estado().repo.rechazo_de(sid)
+
+
+# ---------- seguimiento en ruta (simulado; puerto engine.ubicacion.FuenteUbicacion) ----------
+_FUENTE = ubicacion.crear_fuente(os.environ.get("COSCO_UBICACION", "simulador"))
+
+
+def _dt(x: Optional[str]) -> Optional[datetime]:
+    return datetime.fromisoformat(x) if x else None
+
+
+@app.get("/seguimiento")
+def seguimiento(u: dict = Depends(auth.sesion)):
+    """Servicios en ruta con su recorrido. Operador y gerencia ven todos (en curso + repeticiones de la fase de prueba);
+    el solicitante ve solo los servicios de sus solicitudes. Hoy las posiciones son SIMULADAS (campo `simulado`)."""
+    filas = estado().repo.servicios_en_seguimiento()
+    if u["rol"] not in ("operador", "gerencia"):
+        mias = {a["solicitud_id"] for a in auth.almacen().solicitudes_de(u["usuario"])}
+        filas = [f for f in filas if f["solicitud_id"] in mias]
+    out = []
+    for f in filas:
+        if f["corredor_id"] not in ubicacion.RUTAS:
+            continue
+        p50 = f["transito_p50_h"] or f["distancia_km"] / 45
+        s = ubicacion.ServicioEnRuta(
+            servicio_id=f["servicio_id"], corredor_id=f["corredor_id"],
+            salida=_dt(f["cargue_real"]) or _dt(f["fecha_cargue"]), llegada=_dt(f["entrega_real"]),
+            transito_p50_h=p50, transito_p90_h=f["transito_p90_h"] or p50 * 1.4, p_tarde=f["p_tarde"] if f["p_tarde"] is not None else 0.2,
+            entrega_planeada=_dt(f["entrega_planeada"]))
+        tr = _FUENTE.traza(s)
+        llegada = tr.puntos[-1].t
+        out.append({
+            "servicio_id": f["servicio_id"], "solicitud_id": f["solicitud_id"], "proveedor_id": f["proveedor_id"], "proveedor": f["proveedor"],
+            "corredor_id": f["corredor_id"], "origen": f["origen"], "destino": f["destino"], "nivel_servicio": f["nivel_servicio"],
+            "tipo": "en_curso" if f["estado"] == "EN_CURSO" else "repeticion", "simulado": tr.simulado, "fuente": tr.fuente,
+            "salida": tr.puntos[0].t, "llegada": llegada, "entrega_planeada": f["entrega_planeada"],
+            "a_tiempo": llegada <= f["entrega_planeada"],
+            "paradas": [{"nombre": n, "lat": ubicacion.CIUDADES[n][0], "lon": ubicacion.CIUDADES[n][1]} for n in ubicacion.RUTAS[f["corredor_id"]]],
+            "puntos": [{"t": p.t, "lat": p.lat, "lon": p.lon, "evento": p.evento} for p in tr.puntos],
+        })
+    return out
 
 
 # ---------- seguimiento por rol y avisos ----------

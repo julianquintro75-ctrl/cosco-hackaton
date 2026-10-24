@@ -50,3 +50,12 @@ export interface AjustesAvisos { slack_activo: boolean; avisar_revision: boolean
 export interface EstadoAvisos { ajustes: AjustesAvisos; webhooks: { operaciones: boolean; gerencia: boolean } }
 export interface Aviso { id: number; fecha: string; evento: string; solicitud_id: string | null; destino: string; estado: string; detalle: string }
 export interface Sesion { access_token: string; expira_en: number; usuario: { usuario: string; nombre: string; rol: Rol } }
+
+/** GET /seguimiento: un servicio con su recorrido. Hoy `simulado` siempre es true (ver docs/SEGUIMIENTO.md). */
+export interface PuntoRuta { t: string; lat: number; lon: number; evento: 'salida' | 'parada' | 'reanuda' | 'llegada' | null }
+export interface ServicioSeguimiento {
+  servicio_id: string; solicitud_id: string; proveedor_id: string; proveedor: string; corredor_id: string; origen: string; destino: string;
+  nivel_servicio: Nivel; tipo: 'en_curso' | 'repeticion'; simulado: boolean; fuente: string;
+  salida: string; llegada: string; entrega_planeada: string; a_tiempo: boolean;
+  paradas: { nombre: string; lat: number; lon: number }[]; puntos: PuntoRuta[];
+}

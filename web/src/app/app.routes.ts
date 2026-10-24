@@ -15,6 +15,7 @@ export const routes: Routes = [
       { path: 'pendientes', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/pendientes').then(m => m.Pendientes) },
       { path: 'proveedores', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
       { path: 'proveedores/:id', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
+      { path: 'seguimiento', loadComponent: () => import('./pages/seguimiento').then(m => m.Seguimiento) },
       { path: 'acerca', loadComponent: () => import('./pages/acerca').then(m => m.Acerca) },
       { path: 'panel', canActivate: [rolGuardia('operador', 'gerencia')], loadComponent: () => import('./pages/panel').then(m => m.Panel) },
     ],

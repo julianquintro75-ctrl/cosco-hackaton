@@ -122,3 +122,10 @@ a.btn { text-decoration: none; }
 :root[data-contraste][data-tema='oscuro'] { --linea: #7f93a7; --linea-suave: #34475a; --tenue: #c9d6e3; --azul: #8cc4f5; --rojo-texto: #ffb0b5; --ambar: #ffd08a; --ok: #8be3c3; }
 :root[data-contraste] .tarjeta, :root[data-contraste] .ctl, :root[data-contraste] .btn { border-width: 2px; }
 :root[data-movimiento='reducido'] *, :root[data-movimiento='reducido'] *::before, :root[data-movimiento='reducido'] *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+
+/* Mapa de seguimiento (Leaflet pinta fuera de los componentes, por eso va global) */
+.mapa-icono { background: none; border: 0; }
+.mapa-camion { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); transition: transform .2s; }
+.mapa-camion.activo { transform: scale(1.25); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 35%, transparent), 0 1px 4px rgba(0,0,0,.35); }
+.leaflet-tooltip.mapa-etiqueta { font: 600 12px/1.2 inherit; padding: 2px 6px; border-radius: 6px; }
+.leaflet-container { font: inherit; background: var(--fondo); }

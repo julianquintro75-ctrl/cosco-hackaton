@@ -55,6 +55,9 @@ class Repositorio(Protocol):
     def registrar_decision(self, d: Any, precio_de: Any, proveedores_validos: Any = None, ventana_flex_h: float = 72) -> dict:
         """Valida y guarda decisión + servicio EN_CURSO en una transacción. `proveedores_validos`: ids permitidos. `precio_de(proveedor, corredor, vehiculo, fecha_cargue)` da la tarifa.
         Lanza ErrorNegocio. Devuelve decision_id, servicio_id, acepto_recomendacion, top1, precio_pactado, entrega_planeada."""
+    def servicios_en_seguimiento(self, recientes: int = 6) -> list[dict]:
+        """EN_CURSO + entregados recientes de la fase de prueba, con el tránsito estimado del proveedor."""
+        ...
     def cerrar_servicio(self, ci: Any) -> dict:
         """Cierra el servicio y guarda feedback/incidente. Lanza ErrorNegocio. Devuelve {coherente, entrega_real}."""
 
