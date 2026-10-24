@@ -8,3 +8,4 @@ engine/modelos/
 data/replay.csv
 data/backtest_detalle.csv
 data/backtest_resumen.json
+catboost_info/

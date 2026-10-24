@@ -77,7 +77,7 @@ def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str
                           "P(a tiempo) · IC 90 %": f"{p.p_a_tiempo:.0%} ({p.ic90_p_a_tiempo[0]:.0%}–{p.ic90_p_a_tiempo[1]:.0%}) · {p.n_servicios_corredor} serv.",
                           "Dureza": BANDA[p.banda_dureza] + (f" {p.indice_dureza:.1f}" if p.indice_dureza is not None else ""),
                           "Costo esperado": millones(p.costo_esperado), "Margen": millones(p.margen_esperado)})
-        st.dataframe(pd.DataFrame(filas), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame(filas), hide_index=True, width="stretch")
         izq, der = st.columns([3, 2])
         with izq:
             st.markdown("**Alertas y por qué**")
@@ -99,7 +99,7 @@ def mostrar_recomendacion(rec: RecomendacionOut, sol: dict, clave: str, rol: str
             fig.add_vline(x=sol["tarifa_cliente"] / 1e6, line_dash="dash", annotation_text="tarifa al cliente")
             fig.update_layout(barmode="stack", height=300, margin=dict(l=10, r=10, t=40, b=10), title="Desglose del costo esperado (millones COP)",
                               legend=dict(orientation="h", y=-0.25), font=dict(size=15))
-            st.plotly_chart(fig, use_container_width=True, key=f"g_{clave}")
+            st.plotly_chart(fig, width="stretch", key=f"g_{clave}")
     if rec.descartados:
         st.markdown("**Descartados por reglas duras:** " + " · ".join(f"{B.nombres[d.proveedor_id]} ({d.motivo.replace('_', ' ')}: {d.detalle})" for d in rec.descartados))
     if rec.sugerencia_prueba:
@@ -115,9 +115,9 @@ def decidir(rec: RecomendacionOut, sol: dict, clave: str, rol: str):
         return
     usuario = st.text_input("Usuario", value=rol, key=f"u_{clave}")
     col1, col2 = st.columns(2)
-    if rec.ranking and col1.button(f"✅ Aprobar #1 · {rec.ranking[0].nombre}", key=f"ap_{clave}", type="primary", use_container_width=True):
+    if rec.ranking and col1.button(f"✅ Aprobar #1 · {rec.ranking[0].nombre}", key=f"ap_{clave}", type="primary", width="stretch"):
         registrar(DecisionIn(recomendacion_id=rec.recomendacion_id, solicitud_id=rec.solicitud_id, proveedor_elegido=rec.ranking[0].proveedor_id, usuario=usuario))
-    with col2.popover("Elegir otro (motivo obligatorio)", use_container_width=True):
+    with col2.popover("Elegir otro (motivo obligatorio)", width="stretch"):
         desc = {d.proveedor_id for d in rec.descartados}
         opciones = [p for p in B.proveedores.proveedor_id if p not in desc and (not rec.ranking or p != rec.ranking[0].proveedor_id)]
         elegido = st.selectbox("Proveedor", opciones, format_func=lambda p: B.nombres[p], key=f"o_{clave}")
@@ -177,7 +177,7 @@ def pantalla_nueva():
         a, b = st.columns(2)
         asof_d = a.date_input("«Hoy» del sistema (as_of): solo se usa lo que se sabía hasta aquí", asof_def.date())
         asof_t = b.time_input("Hora as_of", asof_def.time())
-        ir = st.form_submit_button("Recomendar", type="primary", use_container_width=True)
+        ir = st.form_submit_button("Recomendar", type="primary", width="stretch")
     if ir:
         fc = datetime.combine(f_cargue, h_cargue)
         try:
