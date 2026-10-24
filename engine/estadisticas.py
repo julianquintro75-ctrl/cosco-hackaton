@@ -68,7 +68,7 @@ class Estadisticas:
         a = b.servicios_todos.sort_values("fecha_cargue").reset_index(drop=True)
         self._a_t = a.fecha_cargue.values.astype("datetime64[m]")
         self._a_dias = (a.fecha_cargue - pd.Timestamp("2000-01-01")).dt.total_seconds().values / 86400
-        self._a_canc = (a.estado.values != "ENTREGADO").astype(float)
+        self._a_canc = np.isin(a.estado.values, ["CANCELADO", "RECHAZADO"]).astype(float)
         self._a_g = {k: np.asarray(v) for k, v in a.groupby("proveedor_id").indices.items()}
         self._idx_version = b.version_datos
         self._cache.clear()
@@ -182,14 +182,28 @@ class Estadisticas:
         self._cache[key] = out
         return out
 
-    def tendencia(self, as_of, pid, corredor, carga="general") -> float:
-        """Diferencia p_tarde reciente (vida media corta) - p_tarde de referencia. Positivo = empeora."""
+    def tendencia(self, as_of, pid, corredor=None, carga="general") -> float:
+        """Cambio de P(tarde) del proveedor: ultimos N dias frente al ano anterior (todos sus corredores).
+        Devuelve la diferencia (positivo = empeora) solo si es estadisticamente significativa (binomial unilateral p<0.05);
+        si no, 0. Es una alerta: el ranking usa la estimacion bayesiana, no esta cifra."""
+        from scipy.stats import binomtest
         cfg = self.cfg
-        corto = self.combo(as_of, pid, corredor, carga, vida_media=cfg["tendencia_vida_media_dias"])
-        base = self.combo(as_of, pid, corredor, carga, vida_media=90)
-        if corto["n_ponderado"] < 3:   # poca evidencia reciente: no se afirma tendencia
-            return 0.0
-        return corto["p_tarde"] - base["p_tarde"]
+        X = self._ctx(as_of)
+        key = ("t", pd.Timestamp(as_of).floor("min"), pid)
+        if key in self._cache:
+            return self._cache[key]
+        ii = self._antes(self._g1.get(pid), X["k"])
+        edad = X["as_d"] - self._dias[ii]
+        ventana = cfg.get("tendencia_ventana_dias", 30)
+        rec, ant = ii[edad <= ventana], ii[(edad > ventana) & (edad <= 365)]
+        out = 0.0
+        if len(rec) >= 10 and len(ant) >= 20:
+            p_rec, p_ant = self._late[rec].mean(), self._late[ant].mean()
+            if p_rec - p_ant >= cfg["tendencia_umbral"]:
+                if binomtest(int(self._late[rec].sum()), len(rec), max(p_ant, 0.01), alternative="greater").pvalue < 0.05:
+                    out = float(p_rec - p_ant)
+        self._cache[key] = out
+        return out
 
     def tabla(self, as_of, vida_media=None) -> pd.DataFrame:
         """Todas las combinaciones proveedor x corredor (con tarifa) x tipo de carga (que puede atender)."""

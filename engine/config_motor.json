@@ -17,7 +17,7 @@
   "empate_tecnico_pct": 0.03,
   "confianza_baja": 0.5,
   "pocos_datos_n": 10,
-  "tendencia_vida_media_dias": 15,
+  "tendencia_ventana_dias": 30,
   "tendencia_umbral": 0.05,
   "capacidad_vieja_dias": 8,
   "min_obs_transito": 5,

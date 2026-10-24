@@ -122,7 +122,7 @@ class MotorA(MotorDecision):
         elif st["n_servicios"] < cfg["pocos_datos_n"]:
             a.append(f"Poco historial: {st['n_servicios']} servicios en el corredor")
         if f["tend"] > cfg["tendencia_umbral"]:
-            a.append(f"Tendencia a empeorar: P(tarde) reciente +{f['tend']*100:.0f} pp")
+            a.append(f"Tendencia a empeorar: retrasos de los últimos {cfg.get('tendencia_ventana_dias', 30)} días +{f['tend']*100:.0f} pts frente a su año anterior")
         if st["transito_p90_h"] > ctx["H"]:
             a.append(f"Plazo en riesgo: P90 del tránsito {st['transito_p90_h']:.0f} h > plazo {ctx['H']:.0f} h")
         if f["cuota"] > cfg["concentracion_umbral"]:
