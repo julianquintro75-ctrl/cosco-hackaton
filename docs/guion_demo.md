@@ -37,20 +37,21 @@ Para cargar un caso: en «Nueva solicitud», menú **«Cargar un caso de la fase
 |---|---|---|---|
 | Flexible | $300.000 | **Economica del Sur** ($2.370.553) | un retraso casi no cuesta: gana el precio |
 | Estándar | $2.500.000 | **TransPacífico** ($2.929.477) | la puntualidad ya vale más que el sobreprecio |
-| Urgente | $6.000.000 | **TransPacífico** ($3.624.486), Mulas del Valle sube a #2 | aviso amarillo de revisión detallada (Urgente) y rojo de escalamiento: el margen esperado es negativo con la tarifa al cliente |
+| Urgente | $6.000.000 | **TransPacífico** ($3.624.486), Mulas del Valle sube a #2 | aviso amarillo de revisión detallada (Urgente): la tarifa al cliente ($3.662.000) cubre el costo esperado |
 
-**Qué decir:** «No hay una única respuesta correcta: depende de cuánto cuesta llegar tarde. Por eso el cliente elige el nivel y el sistema lo traduce a pesos. En Urgente, además, siempre pide revisión humana, y si la tarifa no cubre el riesgo lo escala a gerencia antes de comprometerse.»
+**Qué decir:** «No hay una única respuesta correcta: depende de cuánto cuesta llegar tarde. Por eso el cliente elige el nivel y el sistema lo traduce a pesos. En Urgente, además, siempre pide revisión humana.»
 
 ## Escena 3 · El mejor proveedor no tiene capacidad (1,5 min)
 
-**Clic:** caso `R005923 · C4 VCB sobredimensionada Estandar` → **Recomendar**. Después, barra lateral → **Gerencia**.
+**Clic:** caso `R005923 · C4 VCB sobredimensionada Estandar` → **Recomendar**. Luego caso `R005907 · C2 V20 Estandar` → **Recomendar** → barra lateral → **Gerencia**.
 
 **Qué se ve:**
 - Descartados: **Altiplano Trans (sin capacidad: 0 unidades VCB en el reporte del 2026-09-26)** y nueve más sin cama baja o sin cobertura.
 - Único factible: **Premium Logistics, $12.977.694**. Con capacidad, Altiplano habría costado $10.169.248.
-- Banda roja «⛔ Escalar a gerencia: margen esperado negativo» (tarifa al cliente $12.556.000). El caso aparece en la pantalla **Gerencia**.
+- Margen esperado positivo (tarifa al cliente $15.318.000), sin escalamiento: la excepción es solo que el mejor no estaba disponible.
+- Para la pantalla **Gerencia**, `R005907`: Top-1 Mulas del Valle $1.647.003 frente a una tarifa de $1.524.000 → banda roja «⛔ Escalar a gerencia: margen esperado negativo». El caso aparece en la pantalla **Gerencia**.
 
-**Qué decir:** «La capacidad es una regla dura: no se compensa con un buen puntaje. El sistema dice qué se pierde ($2,8 M más) y quién debe decidir la excepción: gerencia aprueba, renegocia la tarifa o mueve la fecha.»
+**Qué decir:** «La capacidad es una regla dura: no se compensa con un buen puntaje. El sistema dice qué se pierde ($2,8 M más) y, cuando la tarifa no cubre el costo esperado (R005907), quién debe decidir y quién debe decidir la excepción: gerencia aprueba, renegocia la tarifa o mueve la fecha.»
 
 ## Escena 4 · Proveedor nuevo y sugerencia de prueba (1,5 min)
 
@@ -69,9 +70,9 @@ Para cargar un caso: en «Nueva solicitud», menú **«Cargar un caso de la fase
 **Qué se ve:**
 - Único proveedor en el Top: **Seguridad Total** (certificación IMO).
 - Nueve descartados con «sin certificación: le falta IMO» (incluidos los más baratos) y dos sin cobertura.
-- Escalamiento a gerencia porque la tarifa al cliente ($3.877.000) no cubre el costo esperado ($4.533.515).
+- Tarifa al cliente $4.730.000 frente a un costo esperado de $4.533.515: sin escalamiento, margen ajustado.
 
-**Qué decir:** «Las reglas de seguridad nunca se aprenden ni se relajan: un proveedor sin certificación IMO no entra aunque sea el más barato. Y queda a la vista un riesgo de negocio: en este corredor hay un solo proveedor certificado, así que conviene negociar o certificar a otro.»
+**Qué decir:** «Las reglas de seguridad nunca se aprenden ni se relajan: un proveedor sin certificación IMO no entra aunque sea el más barato. Y queda a la vista un riesgo de concentración: en este corredor hay un solo proveedor certificado, así que conviene negociar o certificar a otro.»
 
 ## Escena 6 · Andina Cargo se degrada y el sistema lo detecta; comparación con Jev (2,5 min)
 

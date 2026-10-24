@@ -37,7 +37,12 @@ def test_escena2_cambia_el_ganador_por_nivel(caso):
 def test_escena3_mejor_sin_capacidad(caso):
     o = caso("R005923")
     assert any(d.proveedor_id == "P12" and d.motivo == "sin_capacidad" for d in o.descartados)
-    assert top1(o) == "Premium Logistics" and o.escalar_gerencia
+    assert top1(o) == "Premium Logistics" and not o.escalar_gerencia
+
+
+def test_escena3_escalamiento_a_gerencia(caso):
+    o = caso("R005907")
+    assert o.escalar_gerencia and "margen_negativo" in o.motivos_revision
 
 
 def test_escena4_sugerencia_de_prueba(caso):

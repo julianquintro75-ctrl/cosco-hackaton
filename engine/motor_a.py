@@ -26,6 +26,10 @@ COMP_NOMBRE = {"precio": "Precio", "retraso_esperado": "Retraso esperado", "inci
                "incertidumbre": "Incertidumbre (poca evidencia)", "concentracion": "Concentración"}
 
 
+# Motivos que se informan pero no obligan a revisar: con un empate tecnico cualquiera de los dos primeros es una buena eleccion.
+AVISOS = {"empate_tecnico"}
+
+
 class MotorA(MotorDecision):
     nombre = "A_propio"
 
@@ -187,7 +191,7 @@ class MotorA(MotorDecision):
         sug = self._sugerencia(sol, factibles, ctx)
         out = RecomendacionOut(
             recomendacion_id=self._id(sol), solicitud_id=sol.solicitud_id, modelo_version=self.modelo_version, motor="A_propio",
-            ranking=ranking, descartados=descartados, requiere_revision=bool(motivos), motivos_revision=motivos,
+            ranking=ranking, descartados=descartados, requiere_revision=bool(set(motivos) - AVISOS), motivos_revision=motivos,
             escalar_gerencia=escalar, sugerencia_prueba=sug, confianza=confianza, explicacion_texto=self._texto(top, factibles, descartados, ctx, sol),
             latencia_ms=None, generado_en=ctx["as_of"].to_pydatetime())
         out.latencia_ms = round((time.perf_counter() - t0) * 1000, 2)

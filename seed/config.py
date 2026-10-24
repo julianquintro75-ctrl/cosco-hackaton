@@ -67,5 +67,5 @@ PESO_LLUVIA = {"P06": 0.4, "P09": 0.6}      # que tanto les afecta la temporada 
 NIVEL_PROB = {"Flexible": 0.30, "Estandar": 0.50, "Urgente": 0.20}
 HOLGURA = {"Flexible": 1.20, "Estandar": 1.20, "Urgente": 1.10}   # entrega_planeada = T0 * holgura
 VENTANA_FLEX_H = 72
-PRIMA_NIVEL = {"Flexible": 0.97, "Estandar": 1.00, "Urgente": 1.12}
+PRIMA_NIVEL = {"Flexible": 0.97, "Estandar": 1.22, "Urgente": 1.60}
 MARGEN_BASE = 1.16
