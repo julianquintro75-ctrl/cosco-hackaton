@@ -148,6 +148,8 @@ Inicio de sesión con JWT, contraseñas con PBKDF2 y bloqueo tras 5 intentos fal
 
 ![Arquitectura](docs/img/arquitectura.png)
 
+El diagrama se genera con [`docs/arquitectura/arquitectura_gen.py`](docs/arquitectura/arquitectura_gen.py) y la gráfica de comparación con [`docs/arquitectura/bench_gen.py`](docs/arquitectura/bench_gen.py).
+
 Detalle, decisiones y puntos de extensión en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md). Versión web: [`docs/arquitectura/index.html`](docs/arquitectura/index.html).
 
 ## Avisos por Slack

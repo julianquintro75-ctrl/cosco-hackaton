@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 930" width="1500" height="930" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#4d6a88"/></marker></defs>
+<rect width="1500" height="930" fill="#ffffff"/>
+<text x="40" y="40" font-size="26" font-weight="800" fill="#0a2640" text-anchor="start" >Arquitectura: capas, interfaces intercambiables y puntos de extensión</text>
+<text x="40" y="64" font-size="14" font-weight="400" fill="#55606e" text-anchor="start" >Línea continua = existe hoy · línea punteada = punto de extensión (aún no construido). Una capa solo conoce a la de abajo.</text>
+<rect x="20" y="84" width="1460" height="130" rx="16" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="40" y="108" font-size="13" font-weight="700" fill="#4d6a88" text-anchor="start" letter-spacing=".06em">1 · CLIENTES</text>
+<rect x="40" y="112" width="330" height="90" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="205.0" y="140.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Web Angular · 3 roles</text>
+<text x="205.0" y="162.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >solicitante · operador · gerencia</text>
+<text x="205.0" y="181.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >recomendar · pendientes · panel · seguimiento</text>
+<rect x="390" y="112" width="330" height="90" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="555.0" y="140.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Scripts y demostración</text>
+<text x="555.0" y="162.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >scripts/demo_api.py · replay.py</text>
+<text x="555.0" y="181.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >demo_concurrencia.py</text>
+<rect x="740" y="112" width="330" height="90" rx="12" fill="#f7f8fa" stroke="#8a94a3" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="905.0" y="140.0" font-size="16" font-weight="700" fill="#6b7280" text-anchor="middle" >Integraciones</text>
+<text x="905.0" y="162.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >ERP / TMS / WhatsApp</text>
+<text x="905.0" y="181.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >consumen la misma API</text>
+<rect x="1090" y="112" width="370" height="90" rx="12" fill="#f0eefc" stroke="#6a3fb5" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1275.0" y="140.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Mapa del seguimiento</text>
+<text x="1275.0" y="162.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >interfaz MotorMapa: Leaflet + OpenStreetMap hoy</text>
+<text x="1275.0" y="181.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >Google Maps mañana</text>
+<rect x="20" y="232" width="1460" height="100" rx="16" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="40" y="256" font-size="13" font-weight="700" fill="#4d6a88" text-anchor="start" letter-spacing=".06em">2 · API</text>
+<rect x="40" y="260" width="1420" height="60" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="750.0" y="284.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >FastAPI · app/api.py · JWT por rol</text>
+<text x="750.0" y="306.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >≈ 22 endpoints: /solicitudes · /recomendar · /decision · devolver · /pendientes · /seguimiento · /notificaciones · /proveedores/{id}/ficha · /tableros/*</text>
+<rect x="20" y="350" width="1460" height="168" rx="16" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="40" y="374" font-size="13" font-weight="700" fill="#4d6a88" text-anchor="start" letter-spacing=".06em">3 · DECISIÓN</text>
+<rect x="40" y="378" width="330" height="126" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="205.0" y="413.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Motor A · propio</text>
+<text x="205.0" y="435.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >reglas duras → bayes Beta(17, 3)</text>
+<text x="205.0" y="454.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >→ costo total esperado → explicación</text>
+<text x="205.0" y="473.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >determinista · 9,3 ms (p50)</text>
+<rect x="390" y="378" width="330" height="126" rx="12" fill="#fdf0d9" stroke="#8a5200" stroke-width="2" />
+<text x="555.0" y="413.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Motor B · Jev</text>
+<text x="555.0" y="435.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >adaptador de caja negra</text>
+<text x="555.0" y="454.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >MEDIDO: $159.419 de arrepentimiento</text>
+<text x="555.0" y="473.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >50,7 % óptimo · 310 ms (p50)</text>
+<rect x="740" y="378" width="330" height="126" rx="12" fill="#fdf0d9" stroke="#8a5200" stroke-width="2" />
+<text x="905.0" y="424.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Motor C · LLM</text>
+<text x="905.0" y="446.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >explica y critica; no ordena</text>
+<text x="905.0" y="465.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >NO MEDIDO (sin clave de API)</text>
+<rect x="1090" y="378" width="370" height="126" rx="12" fill="#f7f8fa" stroke="#8a94a3" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1275.0" y="413.0" font-size="16" font-weight="700" fill="#6b7280" text-anchor="middle" >Otro servicio backend</text>
+<text x="1275.0" y="435.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >p. ej. pronóstico de demanda,</text>
+<text x="1275.0" y="454.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >optimizador de rutas</text>
+<text x="1275.0" y="473.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >(microservicio nuevo)</text>
+<rect x="20" y="536" width="1460" height="112" rx="16" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="40" y="560" font-size="13" font-weight="700" fill="#4d6a88" text-anchor="start" letter-spacing=".06em">4 · NÚCLEO</text>
+<rect x="40" y="564" width="270" height="70" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="175.0" y="593.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >engine/estadisticas.py</text>
+<text x="175.0" y="615.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >bayes + decaimiento (vida media 30 d)</text>
+<rect x="330" y="564" width="270" height="70" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="465.0" y="593.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >engine/fichas.py · modelos.py</text>
+<text x="465.0" y="615.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >Índice de Dureza · ML (candidato)</text>
+<rect x="620" y="564" width="270" height="70" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="755.0" y="593.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >engine/config_motor.json</text>
+<text x="755.0" y="615.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >costos de retraso · λ · umbrales</text>
+<rect x="910" y="564" width="270" height="70" rx="12" fill="#f0eefc" stroke="#6a3fb5" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1045.0" y="593.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >engine/ubicacion.py</text>
+<text x="1045.0" y="615.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >FuenteUbicacion: simulador hoy</text>
+<rect x="1200" y="564" width="260" height="70" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="1330.0" y="593.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >contratos/ (pydantic)</text>
+<text x="1330.0" y="615.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >SolicitudIn · Recomendacion</text>
+<rect x="20" y="666" width="1460" height="198" rx="16" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="40" y="690" font-size="13" font-weight="700" fill="#4d6a88" text-anchor="start" letter-spacing=".06em">5 · DATOS Y SERVICIOS</text>
+<rect x="40" y="694" width="330" height="70" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="205.0" y="723.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >engine/repositorio.py</text>
+<text x="205.0" y="745.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >puerto Repositorio</text>
+<rect x="390" y="694" width="330" height="70" rx="12" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="555.0" y="723.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >RepositorioSQLite</text>
+<text x="555.0" y="745.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >repo_sqlite.py · data/cosco.db · 17 tablas</text>
+<rect x="740" y="694" width="330" height="70" rx="12" fill="#f7f8fa" stroke="#8a94a3" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="905.0" y="723.0" font-size="16" font-weight="700" fill="#6b7280" text-anchor="middle" >Nuevo Repositorio</text>
+<text x="905.0" y="745.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >PostgreSQL: registrar_backend()</text>
+<rect x="1090" y="694" width="370" height="70" rx="12" fill="#fdf0d9" stroke="#8a5200" stroke-width="2" />
+<text x="1275.0" y="723.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >data/verdad_oculta.csv</text>
+<text x="1275.0" y="745.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >solo evaluación · nunca entra al motor</text>
+<rect x="40" y="784" width="330" height="64" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="205.0" y="810.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Slack</text>
+<text x="205.0" y="832.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >avisos por webhook (solo en .env)</text>
+<rect x="390" y="784" width="330" height="64" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="555.0" y="810.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Reentrenador nocturno</text>
+<text x="555.0" y="832.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >publica un candidato si mejora; la persona aprueba</text>
+<rect x="740" y="784" width="720" height="64" rx="12" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="1100.0" y="810.0" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >Despliegue · docker-compose.yml</text>
+<text x="1100.0" y="832.0" font-size="13" font-weight="400" fill="#33495f" text-anchor="middle" >init-datos → api (:8000) + web (:4200, nginx, sin acceso a la base) · reentrenador (perfil ml)</text>
+<line x1="205" y1="202" x2="205" y2="260" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="555" y1="202" x2="555" y2="260" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="905" y1="202" x2="905" y2="260" stroke="#4d6a88" stroke-width="2.4" stroke-dasharray="7 6" marker-end="url(#a)"/>
+<line x1="1275" y1="202" x2="1275" y2="260" stroke="#4d6a88" stroke-width="2.4" stroke-dasharray="7 6" marker-end="url(#a)"/>
+<line x1="205" y1="320" x2="205" y2="378" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="555" y1="320" x2="555" y2="378" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="905" y1="320" x2="905" y2="378" stroke="#4d6a88" stroke-width="2.4" stroke-dasharray="7 6" marker-end="url(#a)"/>
+<line x1="1275" y1="320" x2="1275" y2="378" stroke="#4d6a88" stroke-width="2.4" stroke-dasharray="7 6" marker-end="url(#a)"/>
+<line x1="290" y1="504" x2="290" y2="564" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="290" y1="634" x2="290" y2="694" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="370" y1="729" x2="390" y2="729" stroke="#4d6a88" stroke-width="2.4"  marker-end="url(#a)"/>
+<line x1="720" y1="729" x2="740" y2="729" stroke="#4d6a88" stroke-width="2.4" stroke-dasharray="7 6" marker-end="url(#a)"/>
+<text x="40" y="905" font-size="14" font-weight="600" fill="#33495f" text-anchor="start" >Los motores implementan el puerto MotorDecision; solo repo_sqlite.py ejecuta SQL; la web habla únicamente con la API.</text>
+</svg>
