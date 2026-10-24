@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS servicio (
   servicio_id TEXT PRIMARY KEY, solicitud_id TEXT NOT NULL REFERENCES solicitud, proveedor_id TEXT NOT NULL REFERENCES proveedor,
   precio_pactado INTEGER NOT NULL, cargue_real TEXT, entrega_planeada TEXT NOT NULL, entrega_real TEXT,
   a_tiempo INTEGER, costo_final INTEGER, dias_detencion INTEGER DEFAULT 0,
-  estado TEXT NOT NULL CHECK (estado IN ('ENTREGADO','CANCELADO','RECHAZADO'))
+  estado TEXT NOT NULL CHECK (estado IN ('ENTREGADO','CANCELADO','RECHAZADO','EN_CURSO'))   -- EN_CURSO agregado en el paso 7 (asignado, sin cierre)
 );
 CREATE INDEX IF NOT EXISTS ix_serv_prov ON servicio (proveedor_id, entrega_real);
 CREATE TABLE IF NOT EXISTS evento_servicio (

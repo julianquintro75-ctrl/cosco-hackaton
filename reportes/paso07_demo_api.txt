@@ -1,0 +1,269 @@
+/home/claude/work/proyecto/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+
+=== GET /salud · HTTP 200 ===
+{
+ "estado": "ok",
+ "base": "/tmp/claude-0/-home-claude/860b7372-4636-5ce8-babe-400c6a084a30/scratchpad/demo.db",
+ "modelo_version": "A-bayes-vm45-l1-w1.0",
+ "conteos": {
+  "proveedor": 12,
+  "solicitud": 6170,
+  "servicio": 6197,
+  "recomendacion": 1,
+  "decision": 6024,
+  "estadistica_proveedor": 94
+ },
+ "ultimo_entregado": "2026-10-20 21:56:00",
+ "datos": "sintéticos"
+}
+
+Solicitud basada en R005907 (fase de prueba): C2 V20 Estandar
+
+=== POST /recomendar · HTTP 200 ===
+{
+ "recomendacion_id": "REC-1f577de244f4",
+ "solicitud_id": "DEMO-c5309c",
+ "modelo_version": "A-bayes-vm45-l1-w1.0",
+ "motor": "A_propio",
+ "ranking": [
+  {
+   "posicion": 1,
+   "proveedor_id": "P07",
+   "nombre": "Mulas del Valle",
+   "costo_esperado": 1800239,
+   "desglose": {
+    "precio": 1068000,
+    "retraso_esperado": 295891,
+    "incidente_esperado": 87901,
+    "incertidumbre": 300060,
+    "concentracion": 48387
+   },
+   "margen_esperado": -551239,
+   "p_a_tiempo": 0.8816,
+   "ic90_p_a_tiempo": [
+    0.8159,
+    0.9359
+   ],
+   "transito_p50_h": 9.7,
+   "transito_p90_h": 12.7,
+   "n_servicios_corredor": 269,
+   "indice_dureza": 7.72,
+   "banda_dureza": "Zafiro",
+   "capacidad_unidades": 1,
+   "alertas": [
+    "Plazo en riesgo: P90 del tránsito 13 h > plazo 12 h",
+    "Concentración: 35 % del volumen de 30 días",
+    "Capacidad justa: 1 unidad disponible"
+   ],
+   "factores_clave": [
+    "Costo esperado $215.738 menor que #2 (Andina Cargo)",
+    "Incertidumbre (poca evidencia): $151.017 menos que #2 (Andina Cargo)",
+    "Precio: $76.000 menos que #2 (Andina Cargo)",
+    "Retraso esperado: $57.462 menos que #2 (Andina Cargo)"
+   ]
+  },
+  {
+   "posicion": 2,
+   "proveedor_id": "P01",
+   "nombre": "Andina Cargo",
+   "costo_esperado": 2015977,
+   "desglose": {
+    "precio": 1144000,
+    "retraso_esperado": 353353,
+    "incidente_esperado": 67547,
+    "incertidumbre": 451077,
+    "concentracion": 0
+   },
+   "margen_esperado": -766977,
+   "p_a_tiempo": 0.8587,
+   "ic90_p_a_tiempo": [
+    0.7578,
+    0.9382
+   ],
+   "transito_p50_h": 9.7,
+   "transito_p90_h": 12.8,
+   "n_servicios_corredor": 96,
+   "indice_dureza": 7.55,
+   "banda_dureza": "Zafiro",
+   "capacidad_unidades": 2,
+   "alertas": [
+    "Tendencia a empeorar: retrasos de los últimos 30 días +17 pts frente a su año anterior",
+    "Plazo en riesgo: P90 del tránsito 13 h > plazo 12 h"
+   ],
+   "factores_clave": [
+    "Costo esperado $100.193 menor que #3 (Economica del Sur)",
+    "Retraso esperado: $172.869 menos que #3 (Economica del Sur)",
+    "Precio: $136.000 más que #3 (Economica del Sur)",
+    "Incertidumbre (poca evidencia): $64.696 menos que #3 (Economica del Sur)"
+   ]
+  },
+  {
+   "posicion": 3,
+   "proveedor_id": "P05",
+   "nombre": "Economica del Sur",
+   "costo_esperado": 2116170,
+   "desglose": {
+    "precio": 1008000,
+    "retraso_esperado": 526222,
+    "incidente_esperado": 66175,
+    "incertidumbre": 515773,
+    "concentracion": 0
+   },
+   "margen_esperado": -867170,
+   "p_a_tiempo"
+
+=== POST /decision · HTTP 200 ===
+{
+ "decision_id": "D-ad63c1e42e",
+ "servicio_id": "SV-a9223b3bbc",
+ "acepto_recomendacion": true,
+ "top1": "P07",
+ "precio_pactado": 1068000,
+ "entrega_planeada": "2026-10-05T19:54"
+}
+
+=== POST /cierre · HTTP 200 ===
+{
+ "servicio_id": "SV-a9223b3bbc",
+ "estadistica_actualizada": {
+  "proveedor_id": "P07",
+  "corredor_id": "C2",
+  "tipo_carga": "general",
+  "p_tarde": 0.11992372127040113,
+  "ic90_ancho": 0.12235931896935028,
+  "n_servicios": 268.0
+ },
+ "aviso": null
+}
+
+=== GET /proveedores/P07/ficha · HTTP 200 ===
+{
+ "proveedor_id": "P07",
+ "nombre": "Mulas del Valle",
+ "ciudad_base": "Cali",
+ "fecha_alta": "2014-05-01",
+ "as_of": "2026-10-20T21:56:00",
+ "servicios_entregados": 1933,
+ "puntualidad_general": 0.8417,
+ "dureza_media": 7.23,
+ "cuota_30d": 0.3554,
+ "certificaciones": [],
+ "capacidad": [
+  {
+   "vehiculo": "V40",
+   "flota": 30,
+   "disponibles": 12,
+   "reporte": "2026-10-10"
+  },
+  {
+   "vehiculo": "V20",
+   "flota": 14,
+   "disponibles": 9,
+   "reporte": "2026-10-10"
+  },
+  {
+   "vehiculo": "VSE",
+   "flota": 8,
+   "disponibles": 2,
+   "reporte": "2026-10-10"
+  }
+ ],
+ "fortalezas": [],
+ "debilidades": [
+  "Temporada de lluvias en el Pacífico: puntualidad 8 pts menor (228 servicios en lluvia)"
+ ],
+ "riesgos": [
+  "Concentración: 36% del volumen de los últimos 30 días",
+  "Incidentes recientes: 2 en los últimos 30 días"
+ ],
+ "estadisticas": [
+  {
+   "proveedor_id": "P07",
+   "corredor_id": "C1",
+   "tipo_carga": "general",
+   "alfa": 74.1731,
+   "beta": 17.0078,
+   "p_tarde": 0.1865,
+   "ic90_ancho": 0.1331,
+   "transito_p50_h": 18.7356,
+   "transito_p90_h": 30.002,
+   "transito_fuente": "corredor",
+   "n_servicios": 361,
+   "n_ponderado": 71.181,
+   "n_proveedor": 1933,
+   "tasa_incidente": 0.0125,
+   "tasa_rechazo": 0.0264,
+   "indice_dureza": 6.55,
+   "banda_dureza": "Cuarzo",
+   "nivel_respaldo": "corredor",
+   "vida_media": 45,
+   "puntualidad": 0.8135
+  },
+  {
+   "proveedor_id": "P07",
+   "corredor_id": "C2",
+   "tipo_carga": "general",
+   "alfa": 65.4551,
+   "beta": 11.0621,
+   "p_tarde": 0.1446,
+   "ic90_ancho": 0.1307,
+   "transito_p50_h": 9.7878,
+   "transito_p90_h": 14.8932,
+   "transito_fuente": "corredor",
+   "n_servicios": 284,
+   "n_ponderado": 56.5172,
+   "n_proveedor": 1933,
+   "tasa_incidente": 0.0099,
+   "tasa_rechazo": 0.0264,
+   "indice_dureza": 7.08,
+   "banda_dureza": "Zafiro",
+   "nivel_respaldo": "corredor",
+   "vida_media": 45,
+   "puntualidad": 0.8554
+  },
+  {
+   "proveedor_id": "P07",
+   "corredor_id": "C3",
+   "tipo_carga": "general",
+   "alfa": 43.8624,
+   "beta": 7.4626,
+   "p_tarde": 0.1454,
+   "ic90_ancho": 0.159,
+   "transito_p50_h": 17.8078,
+   "transito_p90_h": 27.6171,
+   "transito_fuente": "corredor",
+   "n_servicios": 171,
+   "n_ponderado": 31.325,
+   "n_proveedor": 1933,
+   "tasa_incidente": 0.0078,
+   "tasa_rechazo": 0.0264,
+   "indice_dureza": 7.03,
+   "banda_dureza": "Zafiro",
+   "nivel_respaldo": "corredor",
+   "vida_media": 45,
+   "puntualidad": 0.8546
+  },
+  {
+   "proveedor_id": "P07",
+   "corredor_id": "C4",
+
+=== GET /salud (después) · HTTP 200 ===
+{
+ "estado": "ok",
+ "base": "/tmp/claude-0/-home-claude/860b7372-4636-5ce8-babe-400c6a084a30/scratchpad/demo.db",
+ "modelo_version": "A-bayes-vm45-l1-w1.0",
+ "conteos": {
+  "proveedor": 12,
+  "solicitud": 6171,
+  "servicio": 6198,
+  "recomendacion": 2,
+  "decision": 6025,
+  "estadistica_proveedor": 94
+ },
+ "ultimo_entregado": "2026-10-20 21:56:00",
+ "datos": "sintéticos"
+}
+
+Tablas pobladas para DEMO-c5309c -> {'estado': 'ENTREGADO', 'a_tiempo': 1, 'acepto_recomendacion': 1, 'recomendacion_id': 'REC-1f577de244f4'}
+OK: solicitud -> recomendación -> decisión -> cierre recorrido completo.

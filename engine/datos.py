@@ -61,7 +61,7 @@ class Base:
         self.entregados = e.sort_values("entrega_real").reset_index(drop=True)
         # arreglos numpy para filtrar rapido por as_of
         self._t_ent = self.entregados.entrega_real.values.astype("datetime64[m]")
-        self.cancelados = s[s.estado != "ENTREGADO"].copy()
+        self.cancelados = s[s.estado.isin(["CANCELADO", "RECHAZADO"])].copy()
         con.close()
         # indices en diccionarios para consultas rapidas
         self._tar = {}
