@@ -1,6 +1,4 @@
 """Paso 10 · las variables de los modelos no usan informacion posterior a la solicitud."""
-import numpy as np
-import pandas as pd
 from engine.datos import Base
 from engine.modelos import construir_dataset
 

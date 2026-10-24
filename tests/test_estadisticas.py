@@ -1,6 +1,5 @@
 """Paso 4 · pruebas de las estadisticas bayesianas con decaimiento."""
 import sqlite3
-import pandas as pd
 from conftest import mini_db
 from engine.datos import Base
 from engine.estadisticas import Estadisticas, calcular, actualizar_con_servicio
