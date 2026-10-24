@@ -1,0 +1,175 @@
+<div class="pagina">
+  <header class="cabecera-pagina">
+    <h1>{{ i18n.t('rec.titulo') }}</h1>
+    <p>{{ i18n.t('rec.ayuda') }}</p>
+  </header>
+
+  @if (cargaError()) {
+    <div class="error-caja" role="alert"><strong>{{ i18n.t('c.error') }}</strong><span>{{ i18n.t('c.errorDetalle') }}</span>
+      <button class="btn" type="button" (click)="cargar()">{{ i18n.t('c.reintentar') }}</button></div>
+  } @else if (!tablas()) {
+    <p class="tenue" role="status"><span class="giro"></span> {{ i18n.t('c.cargando') }}</p>
+  } @else {
+  <div class="rejilla">
+    <aside class="entrada tarjeta pad">
+      <div class="campo">
+        <label for="buscar">{{ i18n.t('rec.solicitud') }}</label>
+        <input id="buscar" class="ctl" type="search" [placeholder]="i18n.t('rec.buscar')" [ngModel]="buscar()" (ngModelChange)="buscar.set($event)" autocomplete="off" />
+        <select class="ctl" size="1" [ngModel]="elegida()" (ngModelChange)="elegir($event)" [attr.aria-label]="i18n.t('rec.solicitud')">
+          @for (s of filtradas(); track s.solicitud_id) { <option [value]="s.solicitud_id">{{ etiqueta(s) }}</option> }
+        </select>
+        @if (!filtradas().length) { <p class="peq tenue">{{ i18n.t('rec.sinResultados') }}</p> }
+      </div>
+
+      @if (actual(); as s) {
+        <div class="campo">
+          <span class="etiqueta" id="lbl-nivel">{{ i18n.t('rec.nivel') }}</span>
+          <div class="segmentos" role="radiogroup" aria-labelledby="lbl-nivel">
+            @for (n of niveles; track n) {
+              <button type="button" role="radio" [attr.aria-checked]="nivel() === n" (click)="nivel.set(n)">{{ i18n.t('rec.nivel.' + n) }}</button>
+            }
+          </div>
+          <p class="peq tenue">{{ i18n.t('rec.costoRetraso') }} <b class="num">{{ i18n.cop(costoRetraso()[nivel()]) }}</b></p>
+        </div>
+
+        <button class="btn primario" type="button" (click)="recomendar()" [disabled]="calculando()">
+          @if (calculando()) { <span class="giro"></span> {{ i18n.t('rec.calculando') }} } @else { {{ i18n.t('rec.recomendar') }} }
+        </button>
+
+        <dl class="resumen">
+          <h2>{{ i18n.t('rec.resumen') }}</h2>
+          <div><dt>{{ i18n.t('rec.cliente') }}</dt><dd>{{ nombreCliente(s.cliente_id) }}</dd></div>
+          <div><dt>{{ i18n.t('rec.corredor') }}</dt><dd>{{ corredor(s.corredor_id) }}</dd></div>
+          <div><dt>{{ i18n.t('rec.vehiculo') }}</dt><dd>{{ vehiculo(s.tipo_vehiculo_req) }}</dd></div>
+          <div><dt>{{ i18n.t('rec.carga') }}</dt><dd>{{ carga(s.tipo_carga) }}@if (s.mercancia_peligrosa) { · <span class="chip rojo">{{ i18n.t('rec.peligrosa') }}</span> }</dd></div>
+          <div><dt>{{ i18n.t('rec.peso') }}</dt><dd class="num">{{ i18n.num(s.peso_ton, 1) }} {{ i18n.t('c.toneladas') }}</dd></div>
+          <div><dt>{{ i18n.t('rec.cargue') }}</dt><dd>{{ i18n.fecha(s.fecha_cargue, true) }}</dd></div>
+          <div><dt>{{ i18n.t('rec.plazo') }}</dt><dd>{{ i18n.fecha(s.plazo_entrega, true) }}</dd></div>
+          <div><dt>{{ i18n.t('rec.tarifaCliente') }}</dt><dd class="num">{{ i18n.cop(s.tarifa_cliente) }}</dd></div>
+        </dl>
+      }
+    </aside>
+
+    <section class="resultado" aria-live="polite">
+      @if (error()) { <div class="aviso rojo" role="alert"><app-icono nombre="aviso" /><span>{{ error() }}</span></div> }
+
+      @if (registrada(); as r) {
+        <div class="aviso ok" role="status"><app-icono nombre="ok" /><div>{{ i18n.t('rec.registrada') }}<ul><li>{{ i18n.t(r.acepto ? 'rec.registradaAcepto' : 'rec.registradaOtro') }}</li></ul></div></div>
+      }
+      @if (previa(); as p) { <div class="aviso ambar" role="status"><app-icono nombre="info" />{{ i18n.t('rec.yaDecidida', { usuario: p.usuario }) }}</div> }
+
+      @if (rec(); as r) {
+        <div class="aviso" [class]="'aviso ' + estado()">
+          <app-icono [nombre]="estado() === 'ok' ? 'ok' : estado() === 'ambar' ? 'info' : 'alto'" />
+          <div>
+            {{ i18n.t(!r.ranking.length || r.escalar_gerencia ? 'rec.estado.gerencia' : r.requiere_revision ? 'rec.estado.revisar' : 'rec.estado.ok') }}
+            <span class="peq conf num"> · {{ i18n.t('rec.confianza') }} {{ pDec(r.confianza) }}</span>
+            @if (r.motivos_revision.length) { <ul>@for (m of r.motivos_revision; track m) { <li>{{ i18n.t('rev.' + m) }}</li> }</ul> }
+          </div>
+        </div>
+
+        @if (r.ranking.length) {
+          <h2>{{ i18n.t('rec.top3') }}</h2>
+          <ol class="top">
+            @for (p of r.ranking; track p.proveedor_id) {
+              <li class="tarjeta prov" [class.primero]="p.posicion === 1">
+                <header>
+                  <span class="pos num" aria-hidden="true">{{ p.posicion }}</span>
+                  <div class="nombre">
+                    <h3>{{ p.nombre }}</h3>
+                    <div class="chips">
+                      @if (p.banda_dureza) { <span class="chip azul">{{ i18n.t('rec.dureza') }}: {{ i18n.t('banda.' + p.banda_dureza) }}@if (p.indice_dureza != null) { <span class="num">&nbsp;{{ i18n.num(p.indice_dureza, 1) }}</span> }</span> }
+                      <span class="chip"><span class="num">{{ p.n_servicios_corredor }}</span>&nbsp;{{ i18n.t('rec.servicios') }}</span>
+                    </div>
+                  </div>
+                  <div class="costo"><small>{{ i18n.t('rec.costoEsperado') }}</small><strong class="num">{{ i18n.cop(p.costo_esperado) }}</strong></div>
+                </header>
+
+                <app-desglose [d]="p.desglose" [maximo]="maxCosto()" [leyenda]="abiertos().has(p.proveedor_id)" />
+
+                <dl class="metricas">
+                  <div><dt>{{ i18n.t('rec.aTiempo') }}</dt><dd class="num">{{ pDec(p.p_a_tiempo) }}</dd><small class="num tenue">{{ i18n.t('rec.ic90') }} {{ pDec(p.ic90_p_a_tiempo[0]) }}–{{ pDec(p.ic90_p_a_tiempo[1]) }}</small></div>
+                  <div><dt>{{ i18n.t('rec.transito') }}</dt><dd class="num">{{ i18n.num(p.transito_p50_h, 0) }} {{ i18n.t('c.horas') }}</dd><small class="num tenue">{{ i18n.t('rec.transitoP', { p50: i18n.num(p.transito_p50_h, 0), p90: i18n.num(p.transito_p90_h, 0) }) }}</small></div>
+                  <div><dt>{{ i18n.t('rec.margen') }}</dt><dd class="num" [class.neg]="p.margen_esperado < 0">{{ i18n.cop(p.margen_esperado) }}</dd></div>
+                  @if (p.capacidad_unidades != null) { <div><dt>{{ i18n.t('rec.capacidad') }}</dt><dd class="num">{{ p.capacidad_unidades }}</dd></div> }
+                </dl>
+
+                @if (p.alertas.length) {
+                  <ul class="alertas">@for (a of p.alertas; track a) { <li><app-icono nombre="aviso" [tam]="16" />{{ tr(a) }}</li> }</ul>
+                }
+                @if (abiertos().has(p.proveedor_id) && p.factores_clave.length) {
+                  <ul class="factores">@for (f of p.factores_clave; track f) { <li>{{ tr(f) }}</li> }</ul>
+                }
+
+                <footer>
+                  <button type="button" class="btn fantasma peq" (click)="alternar(p.proveedor_id)" [attr.aria-expanded]="abiertos().has(p.proveedor_id)">
+                    {{ i18n.t(abiertos().has(p.proveedor_id) ? 'rec.ocultarDetalle' : 'rec.verDetalle') }}
+                  </button>
+                  <a class="btn fantasma peq" [routerLink]="['/proveedores', p.proveedor_id]">{{ i18n.t('rec.fichaVer') }}</a>
+                  <span class="espacio"></span>
+                  @if (!registrada() && !previa()) {
+                    @if (p.posicion === 1) {
+                      <button type="button" class="btn primario" (click)="aprobar()" [disabled]="enviando()">{{ i18n.t('rec.aprobar') }}</button>
+                    } @else {
+                      <button type="button" class="btn" (click)="pedirMotivo(p.proveedor_id)" [disabled]="enviando()">{{ i18n.t('rec.elegir') }}</button>
+                    }
+                  }
+                </footer>
+
+                @if (eligiendo() === p.proveedor_id) {
+                  <form class="motivo" (ngSubmit)="confirmar()">
+                    <div class="campo">
+                      <label [for]="'mot' + p.posicion">{{ i18n.t('rec.motivoTitulo') }}</label>
+                      <select [id]="'mot' + p.posicion" name="motivo" class="ctl" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" required>
+                        <option value="" disabled>—</option>
+                        @for (m of motivos; track m) { <option [value]="m">{{ i18n.t('rec.motivo.' + m) }}</option> }
+                      </select>
+                      <small class="tenue">{{ i18n.t('rec.motivoAyuda') }}</small>
+                    </div>
+                    <div class="acciones">
+                      <button type="submit" class="btn primario" [disabled]="!motivo() || enviando()">{{ i18n.t('rec.confirmar') }}</button>
+                      <button type="button" class="btn" (click)="eligiendo.set(null)">{{ i18n.t('rec.cancelar') }}</button>
+                    </div>
+                  </form>
+                }
+              </li>
+            }
+          </ol>
+        } @else {
+          <div class="tarjeta vacio"><strong>{{ i18n.t('rec.sinRanking') }}</strong><span>{{ i18n.t('rec.sinRankingAyuda') }}</span></div>
+        }
+
+        @if (r.sugerencia_prueba; as sp) {
+          <div class="aviso" style="background: var(--azul-suave); color: var(--azul); border-color: transparent">
+            <app-icono nombre="prueba" /><div>{{ i18n.t('rec.prueba') }}<ul><li>{{ tr(sp.razon) }}</li></ul></div>
+          </div>
+        }
+
+        @if (r.explicacion_texto) {
+          <section class="tarjeta pad explica">
+            <h2>{{ i18n.t('rec.explicacion') }}</h2>
+            <p>{{ tr(r.explicacion_texto) }}</p>
+          </section>
+        }
+
+        @if (r.descartados.length) {
+          <section class="tarjeta">
+            <div class="pad-t"><h2>{{ i18n.t('rec.descartados') }}</h2><p class="peq tenue">{{ i18n.t('rec.descartadosAyuda') }}</p></div>
+            <div class="desliza">
+              <table class="tabla">
+                <tbody>
+                  @for (d of r.descartados; track d.proveedor_id) {
+                    <tr><td><b>{{ nombreProv(d.proveedor_id) }}</b></td><td><span class="chip">{{ i18n.t('desc.' + d.motivo) }}</span></td><td class="tenue peq">{{ tr(d.detalle) }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      } @else if (!calculando() && !error()) {
+        <div class="tarjeta vacio"><strong>{{ i18n.t('rec.vacio') }}</strong><span>{{ i18n.t('rec.vacioDetalle') }}</span></div>
+      }
+    </section>
+  </div>
+  }
+</div>
