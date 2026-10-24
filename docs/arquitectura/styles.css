@@ -1,0 +1,16 @@
+:root{--bg:#fff;--fg:#1b2a3a;--mut:#55606e;--line:#d5dbe3;--acc:#1f4e79;--warn:#d98b1c}
+@media (prefers-color-scheme:dark){:root{--bg:#10161d;--fg:#e6edf3;--mut:#9aa7b5;--line:#2a3542;--acc:#7fb2e5}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Inter,"Segoe UI",system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:clamp(28px,4vw,44px);margin:0 0 8px;letter-spacing:-.02em}
+.lead{color:var(--mut);max-width:70ch}
+.fig{margin:32px 0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:auto}
+.fig img{display:block;width:100%;min-width:760px;height:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{border:1px solid var(--line);border-radius:12px;padding:18px}
+.card h3{margin:0 0 6px;color:var(--acc)}
+.card p{margin:0;color:var(--mut);font-size:15px}
+code{background:rgba(127,127,127,.15);padding:1px 6px;border-radius:5px;font-size:.9em}
+.reveal{opacity:1;transform:none;transition:opacity .6s,transform .6s}
+.js .reveal:not(.in){opacity:0;transform:translateY(14px)}

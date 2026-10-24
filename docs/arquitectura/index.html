@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arquitectura · cosco-hackaton</title>
+<meta name="description" content="Arquitectura del recomendador de proveedores de transporte terrestre (COSCO SHIPPING, Sabana Hack 2026) y sus puntos de extensión.">
+<link rel="stylesheet" href="styles.css?v=20261023"></head>
+<body><main>
+<h1>Arquitectura de cosco-hackaton</h1>
+<p class="lead">Recomendador de proveedores para transporte terrestre en Colombia. Cinco capas con una dependencia en un solo sentido: los clientes llaman a la API, la API a un motor de decisión, el motor al núcleo estadístico y este a los datos. Datos sintéticos.</p>
+<div class="fig reveal"><img src="arquitectura.svg?v=20261023" alt="Diagrama de arquitectura en cinco capas: clientes, API FastAPI, motores A/B/C, núcleo de negocio y datos"></div>
+<h2>Cómo crecer sin reescribir</h2>
+<div class="grid">
+<div class="card reveal"><h3>Nuevo frontend</h3><p>Consume la API HTTP (<code>/recomendar</code>, <code>/decision</code>…). Para que la UI actual haga lo mismo falta reemplazar el <code>import app.api</code> por un cliente <code>httpx</code> usando <code>COSCO_API_URL</code>.</p></div>
+<div class="card reveal"><h3>Otro servicio backend</h3><p>Se agrega como un servicio más en <code>docker-compose.yml</code>, en la red <code>cosco</code>, y la API lo llama por HTTP. Los contratos pydantic definen los mensajes.</p></div>
+<div class="card reveal"><h3>Otro motor de decisión</h3><p>Implementa <code>MotorDecision</code> (<code>contratos/contracts.py</code>). Jev y el LLM ya tienen ese lugar; siguen sin medirse.</p></div>
+<div class="card reveal"><h3>Nueva base de datos</h3><p>Hoy <code>engine/datos.py</code> usa <code>sqlite3</code> directo. Antes de cambiar de base hay que introducir una interfaz de repositorio; el esquema vive en <code>db/schema.sql</code>.</p></div>
+</div>
+</main><script src="main.js?v=20261023" defer></script></body></html>

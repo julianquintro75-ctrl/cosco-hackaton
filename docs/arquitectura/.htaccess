@@ -1,0 +1,10 @@
+# Evita que el hosting sirva CSS/JS viejos tras cada despliegue
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(css|js|svg|png)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+</IfModule>
+AddDefaultCharset UTF-8
