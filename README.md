@@ -85,7 +85,9 @@ docs/       arquitectura, revisión, guion de demo, referencias, imágenes
 3. Todo cálculo recibe `as_of` y no ve el futuro.
 4. Si algo no se midió, se escribe «no medido».
 
-Más contexto: [`CLAUDE.md`](CLAUDE.md), [`PASOS_Y_PROMPTS.md`](PASOS_Y_PROMPTS.md), [`docs/REVISION_PROYECTO.md`](docs/REVISION_PROYECTO.md), [`docs/guion_demo.md`](docs/guion_demo.md).
+Más contexto: [`CLAUDE.md`](CLAUDE.md), [`PASOS_Y_PROMPTS.md`](PASOS_Y_PROMPTS.md), [`docs/REVISION_PROYECTO.md`](docs/REVISION_PROYECTO.md), [`docs/guion_demo.md`](docs/guion_demo.md), [`docs/VALOR_DE_NEGOCIO.md`](docs/VALOR_DE_NEGOCIO.md), [`docs/CASOS_DIFICILES.md`](docs/CASOS_DIFICILES.md).
+
+**Datos reales:** llena `docs/referencia/plantilla_datos.xlsx` y cárgala con `python -m scripts.importar_datos datos.xlsx --out data/real.db`; luego `COSCO_DB=data/real.db`.
 
 ## Pruebas y calidad
 
