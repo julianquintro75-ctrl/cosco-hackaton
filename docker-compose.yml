@@ -1,5 +1,6 @@
 # Arranque en cualquier computador con Docker:   docker compose up --build
-#   API  → http://localhost:8000/docs      UI → http://localhost:8501
+#   Frontend Angular → http://localhost:4200   (usuario de demostración: ver .env.example)
+#   API  → http://localhost:8000/docs      UI Streamlit (alterna) → http://localhost:8501
 #   Reentrenamiento nocturno de ML (opcional):  docker compose --profile ml up -d --build
 #
 # Desacoplamiento: SOLO «init-datos», «api» y «reentrenador» montan la base de datos. La UI no la ve: habla con la API por HTTP.
@@ -17,6 +18,10 @@ x-datos: &datos
   environment:
     COSCO_REPO: ${COSCO_REPO:-/app/data/cosco.db}
     COSCO_SEED: ${COSCO_SEED:-7}
+    COSCO_AUTH_DB: /app/data/auth.db
+    COSCO_JWT_SECRET: ${COSCO_JWT_SECRET:-}
+    COSCO_SEED_USER: ${COSCO_SEED_USER:-jurado}
+    COSCO_SEED_PASSWORD: ${COSCO_SEED_PASSWORD:-Cosco-2026!}
   volumes:
     - cosco-data:/app/data
 
@@ -46,6 +51,8 @@ services:
     command: ["streamlit", "run", "app/ui.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
     environment:
       COSCO_API_URL: http://api:8000      # único acoplamiento de la UI con el resto del sistema
+      COSCO_API_USER: ${COSCO_SEED_USER:-jurado}
+      COSCO_API_PASSWORD: ${COSCO_SEED_PASSWORD:-Cosco-2026!}
     ports: ["${UI_PORT:-8501}:8501"]
     depends_on:
       api: { condition: service_healthy }
@@ -55,6 +62,19 @@ services:
       timeout: 5s
       retries: 6
       start_period: 30s
+    restart: unless-stopped
+
+  # Frontend Angular (nginx): sirve la aplicación y reenvía /api a la API. No ve la base de datos.
+  web:
+    build: ./web
+    image: cosco-web:local
+    networks: [cosco]
+    environment:
+      COSCO_DEMO_USER: ${COSCO_DEMO_USER-jurado}               # vacío = oculta el cuadro de acceso de demostración
+      COSCO_DEMO_PASSWORD: ${COSCO_DEMO_PASSWORD-Cosco-2026!}
+    ports: ["${WEB_PORT:-4200}:80"]
+    depends_on:
+      api: { condition: service_healthy }
     restart: unless-stopped
 
   # Reentrena M1/M2 cada noche; publica un candidato solo si supera a la estadística bayesiana (queda pendiente de aprobación humana).
