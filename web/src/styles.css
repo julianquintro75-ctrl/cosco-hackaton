@@ -28,8 +28,19 @@
     color-scheme: dark;
   }
 }
+:root[data-tema='oscuro'] {
+  --azul: #5aa5e8; --azul-fuerte: #82bbf0; --azul-suave: #14304b; --azul-tinta: #e6eef7;
+  --rojo: #ff6b73; --rojo-suave: #3a1519; --rojo-texto: #ff8e95;
+  --ambar: #f0b45a; --ambar-suave: #35270f; --ok: #5fd0a6; --ok-suave: #102e24;
+  --fondo: #0c141d; --tarjeta: #131e2a; --linea: #263544; --linea-suave: #1c2a38;
+  --texto: #e8eef5; --tenue: #9aabbc; --sobre-azul: #06223b;
+  --lateral: #08111a; --lateral-texto: #a9bacb; --lateral-activo: rgba(255,255,255,.1);
+  --seg-precio: #5aa5e8; --seg-retraso: #ff6b73; --seg-incidente: #8ea6bf; --seg-incert: #5d7289; --seg-conc: #3a4c5f;
+  --sombra: 0 1px 2px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; font-size: calc(100% * var(--escala, 1)); }
 body { margin: 0; background: var(--fondo); color: var(--texto); font: 400 1rem/1.5 var(--fuente); -webkit-font-smoothing: antialiased; }
 h1, h2, h3, p { margin: 0; }
 h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 700; letter-spacing: -.015em; }
@@ -102,3 +113,10 @@ a { color: var(--azul); }
 @keyframes gira { to { transform: rotate(360deg); } }
 @media (max-width: 720px) { .pagina { padding: 1.25rem 1rem 6rem; } h1 { font-size: 1.5rem; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+
+/* Accesibilidad elegida por la persona */
+:root[data-contraste] { --linea: #5d6b79; --linea-suave: #c3ccd5; --tenue: #2c3946; --azul: #003b6b; --rojo-texto: #8f0009; --ambar: #6b3f00; --ok: #07503b; }
+@media (prefers-color-scheme: dark) { :root[data-contraste]:not([data-tema='claro']) { --linea: #7f93a7; --linea-suave: #34475a; --tenue: #c9d6e3; --azul: #8cc4f5; --rojo-texto: #ffb0b5; --ambar: #ffd08a; --ok: #8be3c3; } }
+:root[data-contraste][data-tema='oscuro'] { --linea: #7f93a7; --linea-suave: #34475a; --tenue: #c9d6e3; --azul: #8cc4f5; --rojo-texto: #ffb0b5; --ambar: #ffd08a; --ok: #8be3c3; }
+:root[data-contraste] .tarjeta, :root[data-contraste] .ctl, :root[data-contraste] .btn { border-width: 2px; }
+:root[data-movimiento='reducido'] *, :root[data-movimiento='reducido'] *::before, :root[data-movimiento='reducido'] *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }

@@ -9,6 +9,7 @@ Interfaz web (Angular 21, componentes independientes y señales, sin librerías 
 | Pendientes | Casos para revisar y escalados a gerencia |
 | Proveedores | Ranking por Índice de Dureza y ficha con fortalezas, debilidades, riesgos, capacidad y tendencia |
 | Panel | Puntualidad por mes, precios, capacidad disponible y tránsito por corredor |
+| Cómo funciona | El camino de una solicitud en cuatro pasos, costo de un retraso por nivel, significado de los colores y límites conocidos |
 
 ## Idiomas
 
@@ -16,6 +17,11 @@ Español, English y 简体中文. Se elige en la interfaz (se recuerda en el nav
 Los textos están en `src/app/i18n/{es,en,zh}.ts`; una prueba exige que los tres tengan las mismas claves.
 Las explicaciones que redacta el motor en español se traducen con plantillas (`src/app/i18n/motor.ts`); si aparece una frase que
 ninguna plantilla conoce, se muestra tal cual en español. **Para añadir otro idioma:** copia `en.ts`, tradúcelo y súmalo a `IDIOMAS` en `i18n.service.ts`.
+
+## Preferencias de la persona
+
+Un grupo de controles (idioma, tema, accesibilidad) disponible en el login y en la barra lateral: tema automático/claro/oscuro, tamaño de texto
+(100–130 %), contraste alto y reducción de movimiento. Todo se recuerda en el navegador. La idea del grupo se tomó de la plataforma EciWise.
 
 ## Diseño
 

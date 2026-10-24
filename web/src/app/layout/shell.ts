@@ -4,11 +4,11 @@ import { Auth } from '../core/auth';
 import { I18n } from '../i18n/i18n.service';
 import { Icono } from '../shared/icono';
 import { Marca } from '../shared/marca';
-import { SelectorIdioma } from '../shared/idioma';
+import { SelectorPreferencias } from '../shared/preferencias';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icono, Marca, SelectorIdioma],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icono, Marca, SelectorPreferencias],
   template: `
     <a class="saltar" href="#contenido">{{ i18n.t('nav.saltar') }}</a>
     <div class="marco">
@@ -22,7 +22,7 @@ import { SelectorIdioma } from '../shared/idioma';
           }
         </nav>
         <div class="pie">
-          <app-idioma [claro]="true" />
+          <app-preferencias [claro]="true" />
           <div class="yo">
             <span class="avatar" aria-hidden="true">{{ inicial() }}</span>
             <div class="quien"><strong>{{ auth.usuario()?.nombre }}</strong><small>{{ auth.usuario()?.usuario }}</small></div>
@@ -35,7 +35,7 @@ import { SelectorIdioma } from '../shared/idioma';
         <header class="superior">
           <app-marca [tam]="28" /><strong>{{ i18n.t('app.nombre') }}</strong>
           <span class="espacio"></span>
-          <app-idioma />
+          <app-preferencias />
           <button type="button" class="salir oscuro" (click)="auth.salir()" [attr.aria-label]="i18n.t('nav.salir')"><app-icono nombre="salir" /></button>
         </header>
         <main id="contenido" tabindex="-1"><router-outlet /></main>
@@ -83,6 +83,7 @@ export class Shell {
     { ruta: '/pendientes', icono: 'pendientes', clave: 'nav.pendientes' as const },
     { ruta: '/proveedores', icono: 'proveedores', clave: 'nav.proveedores' as const },
     { ruta: '/panel', icono: 'panel', clave: 'nav.panel' as const },
+    { ruta: '/acerca', icono: 'libro', clave: 'nav.acerca' as const },
   ];
   inicial = () => (this.auth.usuario()?.nombre ?? '?').trim().charAt(0).toUpperCase();
 }

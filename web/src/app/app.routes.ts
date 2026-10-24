@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'pendientes', loadComponent: () => import('./pages/pendientes').then(m => m.Pendientes) },
       { path: 'proveedores', loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
       { path: 'proveedores/:id', loadComponent: () => import('./pages/proveedores').then(m => m.Proveedores) },
+      { path: 'acerca', loadComponent: () => import('./pages/acerca').then(m => m.Acerca) },
       { path: 'panel', loadComponent: () => import('./pages/panel').then(m => m.Panel) },
     ],
   },

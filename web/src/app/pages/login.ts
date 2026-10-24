@@ -7,11 +7,11 @@ import { CONFIG } from '../core/config';
 import { I18n } from '../i18n/i18n.service';
 import { Icono } from '../shared/icono';
 import { Marca } from '../shared/marca';
-import { SelectorIdioma } from '../shared/idioma';
+import { SelectorPreferencias } from '../shared/preferencias';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, Icono, Marca, SelectorIdioma],
+  imports: [FormsModule, Icono, Marca, SelectorPreferencias],
   template: `
     <main class="login">
       <section class="patio" aria-hidden="true">
@@ -26,7 +26,7 @@ import { SelectorIdioma } from '../shared/idioma';
       </section>
 
       <section class="formulario">
-        <div class="barra-idioma"><app-idioma /></div>
+        <div class="barra-idioma"><app-preferencias /></div>
         <form (ngSubmit)="entrar()" class="caja" autocomplete="on">
           <header>
             <h1>{{ i18n.t('login.titulo') }}</h1>
