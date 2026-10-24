@@ -1,7 +1,7 @@
 {
   "_nota": "Parametros del motor A. Cifras ILUSTRATIVAS: calibrar con COSCO. Cambiar aqui, no en el codigo.",
-  "version_pesos": "w1.0",
-  "vida_media_dias": 45,
+  "version_pesos": "w1.1",
+  "vida_media_dias": 30,
   "prior_alfa": 17,
   "prior_beta": 3,
   "prior_incidente_tasa": 0.01,
@@ -10,7 +10,7 @@
   "prior_rechazo_fuerza": 50,
   "costo_retraso": {"Flexible": 300000, "Estandar": 2500000, "Urgente": 6000000},
   "costo_incidente": 8000000,
-  "lambda_incertidumbre": 1.0,
+  "lambda_incertidumbre": 0.5,
   "concentracion_umbral": 0.35,
   "concentracion_cop_por_punto": 100000,
   "concentracion_ventana_dias": 30,
