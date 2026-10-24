@@ -14,3 +14,5 @@ tabulate
 httpx
 matplotlib
 PyJWT>=2.8
+
+openpyxl>=3.1
