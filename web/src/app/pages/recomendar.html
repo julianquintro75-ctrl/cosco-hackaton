@@ -101,7 +101,33 @@
         </div>
 
         @if (r.ranking.length) {
-          <h2>{{ i18n.t('rec.top3') }}</h2>
+          <section class="tarjeta cmp">
+            <div class="pad-t"><h2>{{ i18n.t('cmp.titulo') }}</h2><p class="peq tenue">{{ i18n.t('cmp.ayuda') }}</p></div>
+            @if (porQue()) { <p class="porque">{{ porQue() }}</p> }
+            <div class="desliza">
+              <table class="tabla comparar">
+                <thead><tr><th scope="col"><span class="vh">{{ i18n.t('cmp.criterio') }}</span></th>
+                  @for (p of r.ranking; track p.proveedor_id) { <th scope="col" [class.primero]="p.posicion === 1"><span class="pos num">{{ p.posicion }}</span> {{ p.nombre }}</th> }</tr></thead>
+                <tbody>
+                  @for (f of filas(); track f.k) {
+                    <tr [class.sub]="f.sub" [class.total]="f.k === 'rec.costoEsperado'">
+                      <th scope="row">{{ i18n.t(f.k) }}</th>
+                      @for (c of f.celdas; track $index) {
+                        <td [class.mejor]="c.mejor"><span class="num" [class.neg]="c.neg">{{ c.t }}</span>@if (c.mejor) { <span class="mej" [attr.title]="i18n.t('cmp.mejor')">★</span> }@if (c.s) { <small class="tenue num">{{ c.s }}</small> }</td>
+                      }
+                    </tr>
+                    @if (f.k === 'rec.costoEsperado') {
+                      <tr class="barras"><th scope="row"><span class="vh">{{ i18n.t('cmp.composicion') }}</span></th>
+                        @for (p of r.ranking; track p.proveedor_id) { <td><app-desglose [d]="p.desglose" [maximo]="maxCosto()" [leyenda]="false" /></td> }</tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="peq tenue pie-cmp">★ {{ i18n.t('cmp.mejor') }}</p>
+          </section>
+          <h2>{{ i18n.t('cmp.decide') }}</h2>
+          <h2 class="vh">{{ i18n.t('rec.top3') }}</h2>
           <ol class="top">
             @for (p of r.ranking; track p.proveedor_id) {
               <li class="tarjeta prov" [class.primero]="p.posicion === 1">
@@ -117,18 +143,10 @@
                   <div class="costo"><small>{{ i18n.t('rec.costoEsperado') }}</small><strong class="num">{{ i18n.cop(p.costo_esperado) }}</strong></div>
                 </header>
 
-                <app-desglose [d]="p.desglose" [maximo]="maxCosto()" [leyenda]="abiertos().has(p.proveedor_id)" />
-
-                <dl class="metricas">
-                  <div><dt>{{ i18n.t('rec.aTiempo') }}</dt><dd class="num">{{ pDec(p.p_a_tiempo) }}</dd><small class="num tenue">{{ i18n.t('rec.ic90') }} {{ pDec(p.ic90_p_a_tiempo[0]) }}–{{ pDec(p.ic90_p_a_tiempo[1]) }}</small></div>
-                  <div><dt>{{ i18n.t('rec.transito') }}</dt><dd class="num">{{ i18n.num(p.transito_p50_h, 0) }} {{ i18n.t('c.horas') }}</dd><small class="num tenue">{{ i18n.t('rec.transitoP', { p50: i18n.num(p.transito_p50_h, 0), p90: i18n.num(p.transito_p90_h, 0) }) }}</small></div>
-                  <div><dt>{{ i18n.t('rec.margen') }}</dt><dd class="num" [class.neg]="p.margen_esperado < 0">{{ i18n.cop(p.margen_esperado) }}</dd></div>
-                  @if (p.capacidad_unidades != null) { <div><dt>{{ i18n.t('rec.capacidad') }}</dt><dd class="num">{{ p.capacidad_unidades }}</dd></div> }
-                </dl>
-
                 @if (p.alertas.length) {
                   <ul class="alertas">@for (a of p.alertas; track a) { <li><app-icono nombre="aviso" [tam]="16" />{{ tr(a) }}</li> }</ul>
                 }
+                @if (abiertos().has(p.proveedor_id)) { <app-desglose [d]="p.desglose" [maximo]="maxCosto()" [leyenda]="true" /> }
                 @if (abiertos().has(p.proveedor_id) && p.factores_clave.length) {
                   <ul class="factores">@for (f of p.factores_clave; track f) { <li>{{ tr(f) }}</li> }</ul>
                 }

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Api } from '../core/api';
 import { Auth } from '../core/auth';
-import { Devolucion, MotivoDevolucion, Nivel, Recomendacion, Solicitud, Tablas } from '../core/modelos';
+import { Devolucion, Evaluado, MotivoDevolucion, Nivel, Recomendacion, Solicitud, Tablas } from '../core/modelos';
 import { I18n } from '../i18n/i18n.service';
 import { cargaTexto, traducir } from '../i18n/motor';
 import { Icono } from '../shared/icono';
@@ -55,6 +55,45 @@ export class Recomendar {
   });
   actual = computed(() => this.solicitudes().find(s => s.solicitud_id === this.elegida()) ?? null);
   maxCosto = computed(() => Math.max(0, ...(this.rec()?.ranking.map(r => r.costo_esperado) ?? [0])));
+  /** Tabla comparativa: una fila por criterio, una columna por proveedor; marca el mejor valor de cada fila. */
+  filas = computed(() => {
+    const r = this.rec()?.ranking ?? [];
+    if (!r.length) return [];
+    const i = this.i18n;
+    type F = { k: string; sub?: boolean; celdas: { t: string; s?: string; mejor: boolean; neg?: boolean }[] };
+    const mk = (k: string, v: (p: Evaluado) => number | null, fmt: (p: Evaluado) => string, menor: boolean, sub?: (p: Evaluado) => string | undefined, esSub = false): F | null => {
+      const vals = r.map(v);
+      if (vals.every(x => x == null)) return null;
+      const num = vals.filter((x): x is number => x != null);
+      const mejor = menor ? Math.min(...num) : Math.max(...num);
+      const hayDif = new Set(num).size > 1;
+      return { k, sub: esSub, celdas: r.map((p, j) => ({ t: vals[j] == null ? '—' : fmt(p), s: sub?.(p), mejor: hayDif && vals[j] === mejor, neg: k === 'cmp.margen' && (vals[j] ?? 0) < 0 })) };
+    };
+    const base = r[0].costo_esperado;
+    const dif = (p: Evaluado) => (p.posicion === 1 ? undefined : '+' + i.cop(p.costo_esperado - base) + ' ' + i.t('cmp.vsPrimero'));
+    const comp = (k: keyof Evaluado['desglose']) => mk('comp.' + k, p => p.desglose[k], p => i.cop(p.desglose[k]), true, undefined, true);
+    return [
+      mk('rec.costoEsperado', p => p.costo_esperado, p => i.cop(p.costo_esperado), true, dif),
+      comp('precio'), comp('retraso_esperado'), comp('incidente_esperado'), comp('incertidumbre'), comp('concentracion'),
+      mk('rec.aTiempo', p => p.p_a_tiempo, p => this.pDec(p.p_a_tiempo), false, p => `${i.t('rec.ic90')} ${this.pDec(p.ic90_p_a_tiempo[0])}–${this.pDec(p.ic90_p_a_tiempo[1])}`),
+      mk('rec.transito', p => p.transito_p50_h, p => `${i.num(p.transito_p50_h, 0)} ${i.t('c.horas')}`, true, p => i.t('cmp.pesimista', { p90: i.num(p.transito_p90_h, 0) })),
+      mk('rec.margen', p => p.margen_esperado, p => i.cop(p.margen_esperado), false),
+      mk('rec.capacidad', p => p.capacidad_unidades, p => String(p.capacidad_unidades), false),
+      mk('cmp.servicios', p => p.n_servicios_corredor, p => String(p.n_servicios_corredor), false),
+      mk('rec.dureza', p => p.indice_dureza, p => (p.banda_dureza ? i.t('banda.' + p.banda_dureza) + ' ' : '') + i.num(p.indice_dureza ?? 0, 1), false),
+    ].filter((f): f is F => f != null);
+  });
+  /** Una frase que dice por qué el #1 quedó sobre el #2, en pesos y por componente. */
+  porQue = computed(() => {
+    const r = this.rec()?.ranking ?? [];
+    if (r.length < 2) return '';
+    const [a, b] = r, i = this.i18n;
+    const d = (k: keyof Evaluado['desglose']) => a.desglose[k] - b.desglose[k];
+    const parte = (n: number, c: string) => (Math.round(n) === 0 ? '' : i.t(n > 0 ? 'cmp.mas' : 'cmp.menos', { v: i.cop(Math.abs(n)), c }));
+    const partes = [parte(d('precio'), i.t('comp.precio').toLowerCase()), parte(d('retraso_esperado'), i.t('comp.retraso_esperado').toLowerCase()),
+      parte(d('incidente_esperado') + d('incertidumbre') + d('concentracion'), i.t('cmp.resto'))].filter(Boolean);
+    return i.t('cmp.porQue', { a: a.nombre, b: b.nombre, x: i.cop(b.costo_esperado - a.costo_esperado), d: partes.join('; ') });
+  });
   estado = computed<'ok' | 'ambar' | 'rojo'>(() => { const r = this.rec(); return !r || !r.ranking.length || r.escalar_gerencia ? 'rojo' : r.requiere_revision ? 'ambar' : 'ok'; });
   /** Solo operador y gerencia deciden; lo escalado a gerencia lo decide únicamente gerencia. */
   puedeDecidir = computed(() => { const r = this.auth.rol(); return r === 'gerencia' || (r === 'operador' && !this.rec()?.escalar_gerencia); });

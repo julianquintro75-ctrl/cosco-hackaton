@@ -66,6 +66,7 @@ Además, si dos solicitudes compiten por la **última unidad** de un proveedor, 
 **Clic** (web: **Pendientes** → buscar el id; Streamlit: menú «Cargar un caso»): caso `R005909 · C1 V20 general Estandar` → **Recomendar** → **Aprobar #1**.
 
 **Qué se ve:**
+- Arriba, la **Comparación lado a lado**: una columna por proveedor, una fila por criterio (costo total, precio, retraso, incidentes, puntualidad, tránsito, margen, capacidad), con ★ en el mejor valor de cada fila y una frase que dice por qué el #1 queda sobre el #2.
 - Banda verde «✓ Confianza alta: se puede aprobar en un clic» (confianza 0,95).
 - Top-3: **1. TransPacífico $2.929.477** · 2. Economica del Sur $3.122.910 · 3. Altiplano Trans $3.232.660 (costo esperado).
 - Barras apiladas del desglose: Economica del Sur es la más barata en precio ($2.192.000 frente a $2.363.000) pero su retraso esperado es mucho mayor (77 % a tiempo frente a 89 %).
