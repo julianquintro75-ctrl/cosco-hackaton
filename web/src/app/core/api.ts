@@ -19,6 +19,8 @@ export class Api {
   login(usuario: string, clave: string) { return firstValueFrom(this.http.post<Sesion>(this.u('/auth/login'), { usuario, clave })); }
   config() { return this.una('config', () => firstValueFrom(this.http.get<Record<string, any>>(this.u('/config')))); }
   tablas() { return this.una('tablas', () => firstValueFrom(this.http.get<Tablas>(this.u('/datos/tablas')))); }
+  /** Solo nombres y referencias (llega al instante); las completas, con servicios, pesan megabytes y las usan Panel y Proveedores. */
+  tablasLigeras() { return this.una('tablas-l', () => firstValueFrom(this.http.get<Tablas>(this.u('/datos/tablas'), { params: { ligero: true } }))); }
   solicitudesPrueba() { return this.una('prueba', () => firstValueFrom(this.http.get<Solicitud[]>(this.u('/solicitudes/prueba')))); }
   solicitud(id: string) { return firstValueFrom(this.http.get<Solicitud>(this.u(`/solicitudes/${encodeURIComponent(id)}`))); }
   decisionDe(id: string) { return firstValueFrom(this.http.get<{ usuario: string; proveedor_elegido: string } | null>(this.u(`/decisiones/${encodeURIComponent(id)}`))); }

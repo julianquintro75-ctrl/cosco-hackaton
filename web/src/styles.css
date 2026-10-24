@@ -60,6 +60,7 @@ a { color: var(--azul); }
   border: 1px solid var(--linea); background: var(--tarjeta); font-weight: 600; cursor: pointer; transition: background-color .15s, border-color .15s; }
 .btn:hover:not(:disabled) { border-color: var(--azul); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
+a.btn { text-decoration: none; }
 .btn.primario { background: var(--azul); border-color: var(--azul); color: var(--sobre-azul); }
 .btn.primario:hover:not(:disabled) { background: var(--azul-fuerte); border-color: var(--azul-fuerte); }
 .btn.fantasma { border-color: transparent; background: transparent; color: var(--azul); }

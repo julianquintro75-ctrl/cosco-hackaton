@@ -147,3 +147,10 @@ def test_mis_solicitudes_separa_por_rol(cli):
     suyas = {x["solicitud_id"] for x in cli.get("/mis-solicitudes", headers=hc).json()}
     todas = {x["solicitud_id"] for x in cli.get("/mis-solicitudes", headers=ho).json()}
     assert suyas == {sid} and todas == {sid, otro}
+
+
+def test_tablas_ligeras_solo_traen_referencias(cli):
+    h = entrar(cli, "comercial")
+    lig = cli.get("/datos/tablas?ligero=true", headers=h).json()
+    assert set(lig) == {"proveedor", "corredor", "tipo_vehiculo", "cliente"} and lig["corredor"][0]["origen"]
+    assert "servicios" in cli.get("/datos/tablas", headers=h).json()

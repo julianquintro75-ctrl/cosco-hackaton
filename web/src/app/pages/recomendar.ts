@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -58,13 +58,15 @@ export class Recomendar {
 
   constructor() {
     this.cargar();
-    effect(() => { const s = this.sid(); if (s && this.solicitudes().length) { this.elegir(s); this.recomendar(); } });
+    // Solo reacciona a cambios de la ruta o a que lleguen las solicitudes. El resto va «untracked»: si no, elegir() y recomendar()
+    // leen y escriben señales dentro del efecto y lo vuelven a disparar sin fin (pedía /recomendar en bucle).
+    effect(() => { const s = this.sid(); const hay = this.solicitudes().length > 0; if (s && hay) untracked(() => { this.elegir(s); this.recomendar(); }); });
   }
 
   async cargar() {
     this.cargaError.set(false);
     try {
-      const [t, s, c] = await Promise.all([this.api.tablas(), this.api.solicitudesPrueba(), this.api.config()]);
+      const [t, s, c] = await Promise.all([this.api.tablasLigeras(), this.api.solicitudesPrueba(), this.api.config()]);
       this.tablas.set(t); this.costoRetraso.set(c['costo_retraso'] ?? {});
       this.solicitudes.set(s);
       if (!this.elegida() && !this.sid() && s.length) this.elegir(s[0].solicitud_id);

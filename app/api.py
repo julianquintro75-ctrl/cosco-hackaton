@@ -10,12 +10,14 @@ Roles: solicitante (pide y ve lo suyo) · operador (revisa y decide) · gerencia
 Avisos por Slack: ver app/notificaciones.py. Arranque: uvicorn app.api:app --reload"""
 from __future__ import annotations
 import json, os, threading
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from app import auth, notificaciones
@@ -38,6 +40,7 @@ class Estado:
         self.base = Base(self.repo)
         self.motor = MotorA(self.base, self.cfg)
         self.lock = threading.Lock()
+        self._tablas_json: dict[bool, str] = {}
         self._registrar_modelo()
 
     @property
@@ -49,6 +52,7 @@ class Estado:
                                    datetime.now().strftime(ISO), "equipo (pesos iniciales)")
 
     def recargar(self):
+        self._tablas_json = {}
         self.base.invalidar()
         self.motor = MotorA(self.base, self.cfg)
 
@@ -68,8 +72,19 @@ def estado() -> Estado:
     return ESTADO
 
 
-app = FastAPI(title="Recomendador de proveedores · COSCO SHIPPING (datos sintéticos)", version="1.1", dependencies=[Depends(auth.exigir_sesion)])
+@asynccontextmanager
+async def _arranque(_app):
+    try:
+        estado()                         # calienta la instantánea al arrancar: la primera persona no espera varios segundos
+        datos_tablas(ligero=True); datos_tablas(ligero=False)
+    except Exception:                    # si la base aún no existe, el primer pedido lo dirá con un error claro
+        pass
+    yield
+
+
+app = FastAPI(title="Recomendador de proveedores · COSCO SHIPPING (datos sintéticos)", version="1.1", dependencies=[Depends(auth.exigir_sesion)], lifespan=_arranque)
 app.include_router(auth.router)
+app.add_middleware(GZipMiddleware, minimum_size=1024)      # /datos/tablas pesa ~3 MB sin comprimir
 app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("COSCO_CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",") if o],
                    allow_methods=["GET", "POST", "PUT", "OPTIONS"], allow_headers=["Authorization", "Content-Type"], max_age=600)
 
@@ -130,7 +145,9 @@ def decision(d: DecisionIn, u: dict = Depends(auth.exigir_rol("operador", "geren
         if r and RecomendacionOut.model_validate_json(r[1]).escalar_gerencia:
             raise HTTPException(403, "Este caso está escalado a gerencia: solo gerencia puede decidirlo")
     with E.lock:
-        return E.repo.registrar_decision(d, E.base.tarifa_vigente, proveedores_validos=E.base.nombres, ventana_flex_h=E.cfg.get("ventana_flex_h", 72))
+        r = E.repo.registrar_decision(d, E.base.tarifa_vigente, proveedores_validos=E.base.nombres, ventana_flex_h=E.cfg.get("ventana_flex_h", 72))
+        E._tablas_json = {}
+        return r
 
 
 @app.post("/cierre")
@@ -167,11 +184,17 @@ def config():
 
 
 @app.get("/datos/tablas")
-def datos_tablas():
+def datos_tablas(ligero: bool = Query(False, description="solo tablas de referencia (sin servicios ni capacidad): llega en milisegundos")):
     """Tablas de referencia y servicios para que una interfaz arme su propia instantánea (sin acceso a la base)."""
-    T = estado().repo.tablas_base()
-    cuerpo = "{" + ",".join(f'"{k}":{_json(v)}' for k, v in T.items()) + "}"
-    return Response(cuerpo, media_type="application/json")
+    E = estado()
+    if ligero not in E._tablas_json:     # armar las completas tarda segundos: se guardan hasta que cambien los datos
+        if ligero:                       # nombres de la instantánea que el motor ya tiene en memoria: no toca la base
+            b = E.base
+            T = {"proveedor": b.proveedores, "corredor": b.corredores.reset_index(), "tipo_vehiculo": b.vehiculos.reset_index(), "cliente": b.clientes.reset_index()}
+        else:
+            T = E.repo.tablas_base()
+        E._tablas_json[ligero] = "{" + ",".join(f'"{k}":{_json(v)}' for k, v in T.items()) + "}"
+    return Response(E._tablas_json[ligero], media_type="application/json")
 
 
 @app.get("/solicitudes/prueba")
