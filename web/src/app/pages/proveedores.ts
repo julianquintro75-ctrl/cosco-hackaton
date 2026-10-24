@@ -68,7 +68,8 @@ import { mensual } from '../shared/series';
     }
   </div>`,
   styles: `
-    .rejilla { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 1.5rem; align-items: start; }
+    .rejilla { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); gap: 1.5rem; align-items: start; }
+    .rejilla > .tarjeta .tabla th, .rejilla > .tarjeta .tabla td { padding-inline: .6rem; } .rejilla > .tarjeta .tabla th:first-child, .rejilla > .tarjeta .tabla td:first-child { padding-left: 1rem; } .rejilla > .tarjeta .tabla th:last-child, .rejilla > .tarjeta .tabla td:last-child { padding-right: 1rem; }
     .ficha { display: grid; gap: 1rem; min-width: 0; } .enc { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
     .chips { margin: .6rem 0 0; display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
     .hallazgos { display: grid; gap: 1rem; } .hallazgos ul { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .4rem; font-size: .9375rem; }

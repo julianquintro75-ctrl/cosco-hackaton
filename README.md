@@ -2,7 +2,7 @@
 
 Sistema de apoyo a la decisión para el **transporte terrestre en Colombia** (reto «El reto de arroz con leche»). Para cada solicitud recomienda un **Top-3 de proveedores**, explicado en pesos, y **una persona toma la decisión final**. Los datos son **sintéticos** (COSCO no los entregó); la «verdad oculta» del simulador solo se usa para evaluar.
 
-![Pantalla de recomendación](docs/img/ui_recomendacion.png)
+![Pantalla de recomendación](docs/img/web_recomendar.png)
 
 ## Qué resuelve
 
@@ -13,7 +13,7 @@ Sistema de apoyo a la decisión para el **transporte terrestre en Colombia** (re
 | Poder explicar por qué uno quedó sobre otro | Tabla comparativa lado a lado, frase del «por qué» y desglose del costo |
 | Casos sin opción ideal (sin capacidad, sin vehículo, proveedor nuevo, carga peligrosa) | Reglas duras con motivo, alertas y [`docs/CASOS_DIFICILES.md`](docs/CASOS_DIFICILES.md) |
 | Fortalezas, debilidades y riesgos por proveedor | Ficha de proveedor e Índice de Dureza |
-| Tableros de precios, tránsito, capacidad, vehículos y tendencias | Pantalla **Panel** y [tableros](#tableros) |
+| Tableros de precios, tránsito, capacidad, vehículos y tendencias | Pantalla **Panel** y [capturas](#capturas-de-la-interfaz) |
 | Demostración y validación con datos históricos y de prueba | [Guion](docs/guion_demo.md), `scripts/replay.py`, `scripts/backtest.py`, banco de comparación |
 | Valor de negocio y plan de implementación | [`docs/VALOR_DE_NEGOCIO.md`](docs/VALOR_DE_NEGOCIO.md) |
 
@@ -117,7 +117,23 @@ En el replay, el sistema detecta la caída de Andina Cargo unos 12 días despué
 
 Inicio de sesión con JWT, contraseñas con PBKDF2 y bloqueo tras 5 intentos fallidos. Colores de COSCO SHIPPING. Detalle en [`web/README.md`](web/README.md).
 
-## Tableros
+## Capturas de la interfaz
+
+| | |
+|---|---|
+| ![Nueva solicitud](docs/img/web_nueva.png) | ![Solicitudes](docs/img/web_solicitudes.png) |
+| **Nueva solicitud** (con el botón de ejemplo) | **Solicitudes** con su estado |
+| ![Pendientes](docs/img/web_pendientes.png) | ![Seguimiento](docs/img/web_seguimiento.png) |
+| **Pendientes** por revisar o escalados | **Seguimiento** en ruta (simulado) |
+| ![Proveedores](docs/img/web_proveedores.png) | ![Avisos](docs/img/web_avisos.png) |
+| **Proveedores**: ranking por Índice de Dureza, fortalezas, debilidades y riesgos | **Avisos** de Slack |
+
+![Panel de desempeño](docs/img/web_panel.png)
+
+**Panel de desempeño**: puntualidad por proveedor con alerta de deterioro, precio por corredor y vehículo, capacidad disponible y tránsito por corredor.
+
+<details>
+<summary>Tableros de la interfaz Streamlit alterna (versión anterior, siguen disponibles en :8501)</summary>
 
 | | |
 |---|---|
@@ -125,6 +141,8 @@ Inicio de sesión con JWT, contraseñas con PBKDF2 y bloqueo tras 5 intentos fal
 | ![Capacidad](docs/img/tablero_capacidad.png) | ![Vehículos](docs/img/tablero_vehiculos.png) |
 | ![Tendencias](docs/img/tablero_tendencias.png) | ![Ranking](docs/img/tablero_ranking.png) |
 | ![Gestión](docs/img/tablero_gestion.png) | ![Banco de comparación](docs/img/bench_comparacion.png) |
+
+</details>
 
 ## Arquitectura
 

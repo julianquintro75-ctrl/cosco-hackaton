@@ -102,7 +102,9 @@ export class Panel {
       const t = await this.api.tablas(); this.t.set(t);
       this.corr.set(t.corredor[0]?.corredor_id ?? ''); this.veh.set(t.tipo_vehiculo[0]?.tipo_vehiculo_id ?? '');
       await this.elegirT(t.proveedor[0]?.proveedor_id ?? '');
-      Promise.all([this.api.pendientes('revision'), this.api.pendientes('gerencia')]).then(([r, g]) => this.pend.set({ revision: r.length, gerencia: g.length })).catch(() => {});
+      // Cada conteo por separado: el operador no puede ver la lista de escalados (403) y eso no debe borrar el otro número.
+      this.api.pendientes('revision').then(r => this.pend.update(p => ({ ...p, revision: r.length }))).catch(() => {});
+      this.api.pendientes('gerencia').then(g => this.pend.update(p => ({ ...p, gerencia: g.length }))).catch(() => {});
     } catch { this.error.set(true); }
   }
   async elegirT(id: string) { this.provT.set(id); if (id) this.ficha.set(await this.api.ficha(id).catch(() => null)); }
