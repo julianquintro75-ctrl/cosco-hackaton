@@ -19,7 +19,11 @@ export class MapaLeaflet implements MotorMapa {
     this.mapa = L.map(el, { zoomControl: true, scrollWheelZoom: false, attributionControl: true }).setView([6.6, -74.6], 6);
     L.polygon(CONTORNO_COLOMBIA, { color: '#7d8fa3', weight: 1, fillColor: '#dfe7ef', fillOpacity: 0.55, interactive: false }).addTo(this.mapa);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 12, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 12,
+      // OpenStreetMap bloquea («Access blocked») las teselas pedidas sin Referer. La app usa Referrer-Policy: no-referrer,
+      // así que solo estas imágenes envían el origen (sin ruta ni datos), y no las demás peticiones.
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(this.mapa);
   }
 
