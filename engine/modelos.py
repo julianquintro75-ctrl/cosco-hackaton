@@ -8,7 +8,7 @@ Si M1 no mejora la linea base se dice claramente y el motor se queda con el baye
 Nunca usa verdad_oculta.csv.
 Uso: python -m engine.modelos   (escribe reportes/paso10_modelos.md y registra modelo_version)"""
 from __future__ import annotations
-import json, pickle, sqlite3
+import json, pickle
 from datetime import datetime
 from pathlib import Path
 import numpy as np
@@ -73,16 +73,18 @@ def calibracion(y, p, bins=10):
     return df.groupby("bin", observed=True).agg(p_media=("p", "mean"), real=("y", "mean"), n=("y", "size")).reset_index(drop=True)
 
 
-def entrenar(df: pd.DataFrame, guardar=True) -> dict:
+def entrenar(df: pd.DataFrame, guardar=True, cortes: tuple[str, str, str] | None = None, dir_salida: Path | None = None) -> dict:
+    """`cortes` = (fin_entrenamiento, fin_calibracion, fin_validacion); por omision los del reto. `dir_salida`: donde guardar los artefactos."""
     from catboost import CatBoostClassifier, Pool
     from lightgbm import LGBMRegressor
     from sklearn.isotonic import IsotonicRegression
     from sklearn.metrics import brier_score_loss, roc_auc_score
 
+    c_tr, c_ca, c_va = cortes or (CORTE_TRAIN, CORTE_CAL, FIN_VAL)
     df = df.sort_values("fecha_solicitud").reset_index(drop=True)
-    tr = df[df.fecha_solicitud <= CORTE_TRAIN]
-    ca = df[(df.fecha_solicitud > CORTE_TRAIN) & (df.fecha_solicitud <= CORTE_CAL)]
-    va = df[(df.fecha_solicitud > CORTE_CAL) & (df.fecha_solicitud <= FIN_VAL)]
+    tr = df[df.fecha_solicitud <= c_tr]
+    ca = df[(df.fecha_solicitud > c_tr) & (df.fecha_solicitud <= c_ca)]
+    va = df[(df.fecha_solicitud > c_ca) & (df.fecha_solicitud <= c_va)]
     cols = CAT + NUM
     # ---- M1 ----
     m1 = CatBoostClassifier(iterations=600, depth=5, learning_rate=0.03, loss_function="Logloss", random_seed=7, verbose=0, cat_features=CAT)
@@ -123,9 +125,9 @@ def entrenar(df: pd.DataFrame, guardar=True) -> dict:
     met["shap_importancia_media"] = dict(sorted(zip(cols, np.abs(shap).mean(0).round(4).tolist()), key=lambda x: -x[1]))
     met["imp_m2_p90"] = dict(sorted(zip(cols, m2[0.9].feature_importances_.tolist()), key=lambda x: -x[1])[:8])
     if guardar:
-        DIR_MODELOS.mkdir(exist_ok=True)
-        m1.save_model(str(DIR_MODELOS / "m1_catboost.cbm"))
-        pickle.dump(dict(iso=iso, m2=m2, cols=cols, cat=CAT), open(DIR_MODELOS / "m1_iso_m2.pkl", "wb"))
+        d = Path(dir_salida or DIR_MODELOS); d.mkdir(parents=True, exist_ok=True)
+        m1.save_model(str(d / "m1_catboost.cbm"))
+        pickle.dump(dict(iso=iso, m2=m2, cols=cols, cat=CAT), open(d / "m1_iso_m2.pkl", "wb"))
     return met
 
 
@@ -139,16 +141,13 @@ def factores_shap(m1, fila: pd.DataFrame, n=3) -> list[str]:
 
 
 def registrar(met: dict, db=None):
-    db = db or str(RAIZ / "data" / "cosco.db")
-    con = sqlite3.connect(db)
+    from engine.repositorio import crear_repositorio
+    repo = crear_repositorio(db)
     hoy = datetime.now().strftime("%Y-%m-%dT%H:%M")
-    con.execute("INSERT OR REPLACE INTO modelo_version VALUES (?,?,?,?,?)",
-                ("M1-catboost-iso-v1", "M1 puntualidad (CatBoost + isotonica)", json.dumps({"M1": met["M1"], "decision": met["decision_M1"]}), hoy,
-                 None if met["decision_M1"] != "usar_ml" else "pendiente de aprobacion"))
-    con.execute("INSERT OR REPLACE INTO modelo_version VALUES (?,?,?,?,?)",
-                ("M2-lgbm-quantile-v1", "M2 transito (LightGBM quantile 0.5/0.9)", json.dumps({"M2": met["M2"], "decision": met["decision_M2"]}), hoy,
-                 None if met["decision_M2"] != "usar_ml" else "pendiente de aprobacion"))
-    con.commit(); con.close()
+    repo.registrar_modelo("M1-catboost-iso-v1", "M1 puntualidad (CatBoost + isotonica)", json.dumps({"M1": met["M1"], "decision": met["decision_M1"]}), hoy,
+                          None if met["decision_M1"] != "usar_ml" else "pendiente de aprobacion", reemplazar=True)
+    repo.registrar_modelo("M2-lgbm-quantile-v1", "M2 transito (LightGBM quantile 0.5/0.9)", json.dumps({"M2": met["M2"], "decision": met["decision_M2"]}), hoy,
+                          None if met["decision_M2"] != "usar_ml" else "pendiente de aprobacion", reemplazar=True)
 
 
 def reporte(met: dict) -> str:

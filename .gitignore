@@ -9,3 +9,5 @@ data/replay.csv
 data/backtest_detalle.csv
 data/backtest_resumen.json
 catboost_info/
+
+data/reentrenamiento_log.jsonl
