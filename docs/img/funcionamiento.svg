@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 900" width="1500" height="900" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#4d6a88"/></marker><marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#d6000e"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#0f6e4f"/></marker></defs>
+<rect width="1500" height="900" fill="#ffffff"/>
+<text x="40" y="42" font-size="26" font-weight="800" fill="#0a2640" text-anchor="start" >Cómo funciona: de la solicitud a la decisión y de vuelta a los datos</text>
+<rect x="20" y="95" width="1460" height="200" rx="20" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="42" y="123" font-size="15" font-weight="700" fill="#4d6a88" text-anchor="start"  letter-spacing=".04em">1 · SOLICITUD Y MOTOR DE RECOMENDACIÓN (automático, determinista, ≈15 ms)</text>
+<rect x="40" y="145" width="230" height="120" rx="14" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="155.0" y="196.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Crea la solicitud</text>
+<text x="155.0" y="220.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >cliente · corredor · vehículo</text>
+<text x="155.0" y="241.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >peso · plazo</text>
+<rect x="100.0" y="132" width="110" height="26" rx="13" fill="#00508f"/>
+<text x="155.0" y="150" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle" >SOLICITANTE</text>
+<rect x="330" y="145" width="230" height="120" rx="14" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="445.0" y="177.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Filtros duros</text>
+<text x="445.0" y="201.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >certificación · vehículo</text>
+<text x="445.0" y="222.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >tarifa · capacidad</text>
+<text x="445.0" y="243.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >(cada descartado, con motivo)</text>
+<rect x="620" y="145" width="230" height="120" rx="14" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="735.0" y="177.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Estadística bayesiana</text>
+<text x="735.0" y="201.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >P(a tiempo) · tránsito · incidentes</text>
+<text x="735.0" y="222.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >por proveedor × corredor × carga</text>
+<text x="735.0" y="243.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >los datos recientes pesan más</text>
+<rect x="910" y="145" width="230" height="120" rx="14" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="1025.0" y="177.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Costo total esperado</text>
+<text x="1025.0" y="201.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >precio + retraso + incidentes</text>
+<text x="1025.0" y="222.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >+ incertidumbre + concentración</text>
+<text x="1025.0" y="243.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >todo en pesos</text>
+<rect x="1200" y="145" width="250" height="120" rx="14" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="1325.0" y="188.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Top-3 explicado</text>
+<text x="1325.0" y="212.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >por qué #1 sobre #2</text>
+<text x="1325.0" y="233.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >alertas · confianza · margen</text>
+<path d="M270 205.0 L328 205.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M560 205.0 L618 205.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M850 205.0 L908 205.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M1140 205.0 L1198 205.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<rect x="239.0" y="173.0" width="122" height="22" rx="6" fill="#ffffff" opacity=".96"/>
+<text x="300" y="189.0" font-size="13" font-weight="600" fill="#33495f" text-anchor="middle" >POST /solicitudes</text>
+<rect x="20" y="325" width="1460" height="230" rx="20" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="42" y="353" font-size="15" font-weight="700" fill="#4d6a88" text-anchor="start"  letter-spacing=".04em">2 · PERSONAS</text>
+<path d="M1325 383 L1430 445 L1325 507 L1220 445 Z" fill="#fdf0d9" stroke="#8a5200" stroke-width="2"/>
+<text x="1325" y="441" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >¿Pide revisión</text>
+<text x="1325" y="461" font-size="16" font-weight="700" fill="#0a2640" text-anchor="middle" >o escalamiento?</text>
+<path d="M1325 267 L1325 381" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<rect x="910" y="385" width="230" height="120" rx="14" fill="#fdf0d9" stroke="#8a5200" stroke-width="2" />
+<text x="1025.0" y="428.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Aviso a Slack</text>
+<text x="1025.0" y="452.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >operaciones o gerencia</text>
+<text x="1025.0" y="473.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >una sola vez por solicitud</text>
+<rect x="570" y="375" width="290" height="140" rx="14" fill="#ffffff" stroke="#d6000e" stroke-width="2.5" />
+<text x="715.0" y="417.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Una persona decide</text>
+<text x="715.0" y="441.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >Operador: aprueba el #1 o elige otro</text>
+<text x="715.0" y="462.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >Gerencia: decide lo escalado</text>
+<text x="715.0" y="483.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >una sola decisión por solicitud</text>
+<rect x="270" y="385" width="230" height="120" rx="14" fill="#ffffff" stroke="#d6000e" stroke-width="2.5" />
+<text x="385.0" y="428.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Devolver al solicitante</text>
+<text x="385.0" y="452.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >motivo + nota</text>
+<text x="385.0" y="473.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >queda registrado</text>
+<path d="M1219 445 L1142 445" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<rect x="1153.0" y="415" width="34" height="22" rx="6" fill="#ffffff" opacity=".96"/>
+<text x="1170" y="431" font-size="13" font-weight="600" fill="#33495f" text-anchor="middle" >sí</text>
+<path d="M910 445 L862 445" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M1325 509 L1325 532 L810 532 L810 517" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<rect x="972.0" y="531" width="176" height="22" rx="6" fill="#ffffff" opacity=".96"/>
+<text x="1060" y="547" font-size="13" font-weight="600" fill="#33495f" text-anchor="middle" >no: aprobación en un clic</text>
+<path d="M570 445 L502 445" fill="none" stroke="#d6000e" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#r)"/>
+<rect x="524.0" y="417" width="24" height="22" rx="6" fill="#ffffff" opacity=".96"/>
+<text x="536" y="433" font-size="13" font-weight="600" fill="#33495f" text-anchor="middle" >o</text>
+<path d="M270 445 L205 445 L205 267" fill="none" stroke="#d6000e" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#r)"/>
+<rect x="149.0" y="347" width="112" height="22" rx="6" fill="#ffffff" opacity=".96"/>
+<text x="205" y="363" font-size="13" font-weight="600" fill="#33495f" text-anchor="middle" >corrige y reenvía</text>
+<rect x="20" y="585" width="1460" height="225" rx="20" fill="#f5f8fb" stroke="#c5d2df" stroke-width="1.5"/>
+<text x="42" y="613" font-size="15" font-weight="700" fill="#4d6a88" text-anchor="start"  letter-spacing=".04em">3 · DESPUÉS DE DECIDIR</text>
+<rect x="560" y="650" width="300" height="120" rx="14" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="710.0" y="693.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Servicio EN CURSO</text>
+<text x="710.0" y="717.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >capacidad del proveedor comprometida</text>
+<text x="710.0" y="738.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >(la siguiente solicitud ya no la ve)</text>
+<rect x="910" y="650" width="230" height="120" rx="14" fill="#f0eefc" stroke="#6a3fb5" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1025.0" y="693.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Seguimiento en ruta</text>
+<text x="1025.0" y="717.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >mapa con animación</text>
+<text x="1025.0" y="738.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >SIMULADO hoy</text>
+<rect x="1200" y="650" width="250" height="120" rx="14" fill="#ffffff" stroke="#00508f" stroke-width="2" />
+<text x="1325.0" y="693.0" font-size="17" font-weight="700" fill="#0a2640" text-anchor="middle" >Cierre del servicio</text>
+<text x="1325.0" y="717.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >resultado real: a tiempo,</text>
+<text x="1325.0" y="738.0" font-size="14" font-weight="400" fill="#33495f" text-anchor="middle" >incidente, costo final</text>
+<path d="M690 517 L690 648" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M860 710.0 L908 710.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<path d="M1140 710.0 L1198 710.0" fill="none" stroke="#4d6a88" stroke-width="2.5"  marker-end="url(#a)"/>
+<rect x="905.0" y="774" width="240" height="22" rx="6" fill="#f0eefc" opacity=".96"/>
+<text x="1025" y="790" font-size="13" font-weight="600" fill="#4a2c8a" text-anchor="middle" >GPS real o Google Maps entran aquí</text>
+<path d="M1450 710.0 L1472 710.0 L1472 76 L735 76 L735 143" fill="none" stroke="#0f6e4f" stroke-width="3.5"  marker-end="url(#g)"/>
+<rect x="840.0" y="62" width="520" height="22" rx="6" fill="#e6f4ee" opacity=".96"/>
+<text x="1100" y="78" font-size="13" font-weight="600" fill="#0f6e4f" text-anchor="middle" >cada cierre actualiza la estadística al instante: el sistema aprende de lo que pasó</text>
+<rect x="40" y="842" width="26" height="18" rx="5" fill="#e4edf6" stroke="#00508f" stroke-width="2" />
+<text x="76" y="856" font-size="14" font-weight="600" fill="#33495f" text-anchor="start" >Automático</text>
+<rect x="200" y="842" width="26" height="18" rx="5" fill="#fff" stroke="#d6000e" stroke-width="2" />
+<text x="236" y="856" font-size="14" font-weight="600" fill="#33495f" text-anchor="start" >Decide una persona</text>
+<rect x="424" y="842" width="26" height="18" rx="5" fill="#fdf0d9" stroke="#8a5200" stroke-width="2" />
+<text x="460" y="856" font-size="14" font-weight="600" fill="#33495f" text-anchor="start" >Aviso</text>
+<rect x="544" y="842" width="26" height="18" rx="5" fill="#f0eefc" stroke="#6a3fb5" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="580" y="856" font-size="14" font-weight="600" fill="#33495f" text-anchor="start" >Simulado</text>
+<text x="1460" y="856" font-size="14" font-weight="600" fill="#33495f" text-anchor="end" >Si dos personas actúan a la vez: gana una, la otra recibe aviso claro (docs/CASOS_BORDE.md)</text>
+</svg>
