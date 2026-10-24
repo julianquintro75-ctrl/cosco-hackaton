@@ -43,7 +43,7 @@ class MotorA(MotorDecision):
     # ---------- piezas ----------
     def cuotas(self, as_of) -> dict:
         """Participacion de cada proveedor en los servicios asignados de los ultimos N dias (concentracion)."""
-        k = pd.Timestamp(as_of).floor("D")
+        k = pd.Timestamp(as_of).floor("min")   # misma precision que el calculo: el resultado no depende del orden de las llamadas
         if k not in self._cuota_cache:
             s = self.base.servicios_todos
             m = s[(s.fecha_cargue <= as_of) & (s.fecha_cargue > as_of - timedelta(days=self.cfg["concentracion_ventana_dias"]))]
