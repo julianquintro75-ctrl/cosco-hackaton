@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 data/*.db
 data/verdad_oculta.csv
+engine/modelos/
+data/replay.csv
