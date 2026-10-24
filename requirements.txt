@@ -13,3 +13,4 @@ shap
 tabulate
 httpx
 matplotlib
+PyJWT>=2.8

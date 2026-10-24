@@ -12,9 +12,11 @@ import json, os, threading
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
+from app import auth
 from contratos.contracts import CierreServicioIn, DecisionIn, RecomendacionOut, SolicitudIn
 from engine.datos import Base, cargar_config
 from engine.repositorio import ErrorNegocio, crear_repositorio
@@ -64,7 +66,17 @@ def estado() -> Estado:
     return ESTADO
 
 
-app = FastAPI(title="Recomendador de proveedores · COSCO SHIPPING (datos sintéticos)", version="1.0")
+app = FastAPI(title="Recomendador de proveedores · COSCO SHIPPING (datos sintéticos)", version="1.1", dependencies=[Depends(auth.exigir_sesion)])
+app.include_router(auth.router)
+app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("COSCO_CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",") if o],
+                   allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"], max_age=600)
+
+
+@app.middleware("http")
+async def _cabeceras(request, call_next):
+    r = await call_next(request)
+    r.headers.update({"X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Cache-Control": "no-store"})
+    return r
 
 
 @app.exception_handler(ErrorNegocio)
@@ -105,7 +117,8 @@ def recomendar(sol: SolicitudIn):
 
 
 @app.post("/decision")
-def decision(d: DecisionIn):
+def decision(d: DecisionIn, u: dict = Depends(auth.sesion)):
+    d = d.model_copy(update={"usuario": u["usuario"]}) if auth.exigida() else d   # el autor sale de la sesión, no del cuerpo
     E = estado()
     with E.lock:
         return E.repo.registrar_decision(d, E.base.tarifa_vigente, proveedores_validos=E.base.nombres, ventana_flex_h=E.cfg.get("ventana_flex_h", 72))

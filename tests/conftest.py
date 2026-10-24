@@ -1,9 +1,10 @@
-import shutil, sqlite3, sys
+import os, shutil, sqlite3, sys
 from pathlib import Path
 import pytest
 
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
+os.environ.setdefault("COSCO_AUTH_REQUIRED", "0")   # las pruebas de la API no llevan sesión; test_auth la enciende
 DB = RAIZ / "data" / "cosco.db"
 
 

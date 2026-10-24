@@ -1,6 +1,7 @@
 """Implementación SQLite del puerto `Repositorio`. Es el ÚNICO módulo de la aplicación que habla SQL (junto con seed/ y los scripts de carga)."""
 from __future__ import annotations
 
+import logging
 import sqlite3
 import uuid
 from datetime import timedelta
@@ -259,3 +260,27 @@ class RepositorioSQLite:
 
 
 registrar_backend("sqlite", RepositorioSQLite)
+
+
+# ---------- usuarios de la API (almacén propio, separado de los datos del negocio) ----------
+class UsuariosSQLite:
+    """Usuarios en su propio archivo SQLite (separado de los datos del negocio)."""
+
+    def __init__(self, ruta: str, hash_semilla, usuario_semilla: str):
+        self.ruta = ruta
+        Path(ruta).parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(ruta)
+        con.execute("""CREATE TABLE IF NOT EXISTS usuario (usuario TEXT PRIMARY KEY, nombre TEXT NOT NULL, rol TEXT NOT NULL,
+                       clave_hash TEXT NOT NULL, activo INTEGER NOT NULL DEFAULT 1)""")
+        if con.execute("SELECT count(*) FROM usuario").fetchone()[0] == 0:
+            con.execute("INSERT INTO usuario VALUES (?,?,?,?,1)", (usuario_semilla, "Jurado Sabana Hack", "gerencia", hash_semilla()))
+            logging.getLogger("cosco.auth").warning("Usuario semilla de demostración creado: %s", usuario_semilla)
+        con.commit(); con.close()
+
+    def obtener(self, usuario: str) -> Optional[dict]:
+        con = sqlite3.connect(self.ruta); con.row_factory = sqlite3.Row
+        try:
+            r = con.execute("SELECT * FROM usuario WHERE usuario=? AND activo=1", (usuario,)).fetchone()
+            return dict(r) if r else None
+        finally:
+            con.close()

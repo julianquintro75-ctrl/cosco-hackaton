@@ -31,9 +31,29 @@ def _error(r: httpx.Response) -> HTTPException:
     return HTTPException(r.status_code, detalle)
 
 
+_TOKEN: dict[str, str] = {}
+
+
+def _token(renovar: bool = False) -> dict[str, str]:
+    """Sesión de servicio de esta UI: COSCO_API_USER / COSCO_API_PASSWORD (si la API exige autenticación)."""
+    u, c = os.environ.get("COSCO_API_USER"), os.environ.get("COSCO_API_PASSWORD")
+    if not (u and c):
+        return {}
+    if renovar or "t" not in _TOKEN:
+        r = httpx.post(f"{URL}/auth/login", json={"usuario": u, "clave": c}, timeout=TIMEOUT)
+        if r.status_code >= 400:
+            raise _error(r)
+        _TOKEN["t"] = r.json()["access_token"]
+    return {"Authorization": f"Bearer {_TOKEN['t']}"}
+
+
 def _http(metodo: str, ruta: str, **kw) -> httpx.Response:
     try:
-        r = httpx.request(metodo, f"{URL}{ruta}", timeout=TIMEOUT, **kw)
+        for intento in (0, 1):
+            h = {**kw.get("headers", {}), **_token(renovar=intento == 1)}
+            r = httpx.request(metodo, f"{URL}{ruta}", timeout=TIMEOUT, **{**kw, "headers": h})
+            if r.status_code != 401 or intento == 1 or not os.environ.get("COSCO_API_USER"):
+                break
     except httpx.HTTPError as e:
         raise HTTPException(503, f"No se pudo contactar la API en {URL}: {e}") from e
     if r.status_code >= 400:
@@ -54,7 +74,7 @@ def recomendar(sol: SolicitudIn) -> RecomendacionOut:
 
 def decision(d: DecisionIn) -> dict:
     if not URL:
-        return _api().decision(d)
+        return _api().decision(d, {"usuario": d.usuario})
     return _http("POST", "/decision", content=d.model_dump_json(), headers={"Content-Type": "application/json"}).json()
 
 
