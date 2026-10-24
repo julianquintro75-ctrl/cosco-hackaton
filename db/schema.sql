@@ -85,5 +85,6 @@ CREATE TABLE IF NOT EXISTS estadistica_proveedor (
   proveedor_id TEXT NOT NULL REFERENCES proveedor, corredor_id TEXT NOT NULL REFERENCES corredor, tipo_carga TEXT NOT NULL,
   alfa REAL NOT NULL, beta REAL NOT NULL, p_tarde REAL, ic90_ancho REAL, transito_p50_h REAL, transito_p90_h REAL,
   n_servicios REAL NOT NULL, tasa_incidente REAL, indice_dureza REAL, actualizado TEXT NOT NULL,
+  nivel_respaldo TEXT,                      -- agregado en el paso 4: corredor | corredor_cualquier_carga | proveedor | global
   PRIMARY KEY (proveedor_id, corredor_id, tipo_carga)
 );
