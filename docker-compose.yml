@@ -1,0 +1,76 @@
+# Arranque en cualquier computador con Docker:   docker compose up --build
+#   API  → http://localhost:8000/docs      UI → http://localhost:8501
+#   Reentrenamiento nocturno de ML (opcional):  docker compose --profile ml up -d --build
+#
+# Desacoplamiento: SOLO «init-datos», «api» y «reentrenador» montan la base de datos. La UI no la ve: habla con la API por HTTP.
+# Para agregar un servicio (otro frontend, otro backend) copia un bloque de «services», conéctalo a la red «cosco»
+# y apúntalo a http://api:8000. Para otra base de datos agrega su servicio y cambia COSCO_REPO (ver engine/repositorio.py).
+name: cosco
+
+x-base: &base
+  build: .
+  image: cosco-hackaton:local
+  networks: [cosco]
+
+x-datos: &datos
+  <<: *base
+  environment:
+    COSCO_REPO: ${COSCO_REPO:-/app/data/cosco.db}
+    COSCO_SEED: ${COSCO_SEED:-7}
+  volumes:
+    - cosco-data:/app/data
+
+services:
+  # Tarea de una sola vez: genera los datos sintéticos si no existen (idempotente).
+  init-datos:
+    <<: *datos
+    command: ["python", "scripts/init_datos.py"]
+    restart: "no"
+
+  api:
+    <<: *datos
+    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["${API_PORT:-8000}:8000"]
+    depends_on:
+      init-datos: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/salud', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+  ui:
+    <<: *base
+    command: ["streamlit", "run", "app/ui.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+    environment:
+      COSCO_API_URL: http://api:8000      # único acoplamiento de la UI con el resto del sistema
+    ports: ["${UI_PORT:-8501}:8501"]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8501/_stcore/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+
+  # Reentrena M1/M2 cada noche; publica un candidato solo si supera a la estadística bayesiana (queda pendiente de aprobación humana).
+  reentrenador:
+    <<: *datos
+    profiles: ["ml"]
+    command: ["python", "scripts/reentrenar.py", "--demonio", "--hora", "${HORA_REENTRENAMIENTO:-02:00}"]
+    environment:
+      COSCO_REPO: ${COSCO_REPO:-/app/data/cosco.db}
+      COSCO_LOG_REENTRENAMIENTO: /app/data/reentrenamiento_log.jsonl
+    depends_on:
+      init-datos: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+volumes:
+  cosco-data:
+
+networks:
+  cosco:

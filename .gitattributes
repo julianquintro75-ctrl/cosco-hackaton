@@ -1,0 +1,7 @@
+# Evita que Windows convierta los finales de línea y rompa scripts .sh y la imagen Docker
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.pdf binary
+*.xlsx binary
+*.db binary

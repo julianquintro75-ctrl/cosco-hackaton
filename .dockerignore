@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+catboost_info
+data/*.db
+data/*.csv
+data/*.json
+reportes
+*.pdf
+.env
