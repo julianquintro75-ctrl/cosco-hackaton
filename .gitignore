@@ -6,3 +6,5 @@ data/*.db
 data/verdad_oculta.csv
 engine/modelos/
 data/replay.csv
+data/backtest_detalle.csv
+data/backtest_resumen.json
