@@ -1,0 +1,73 @@
+{
+  "description": "Se envia al cerrar un servicio; dispara la actualizacion bayesiana inmediata.",
+  "properties": {
+    "servicio_id": {
+      "title": "Servicio Id",
+      "type": "string"
+    },
+    "entrega_real": {
+      "format": "date-time",
+      "title": "Entrega Real",
+      "type": "string"
+    },
+    "a_tiempo": {
+      "title": "A Tiempo",
+      "type": "boolean"
+    },
+    "costo_final": {
+      "title": "Costo Final",
+      "type": "integer"
+    },
+    "dias_detencion": {
+      "default": 0,
+      "title": "Dias Detencion",
+      "type": "integer"
+    },
+    "hubo_incidente": {
+      "default": false,
+      "title": "Hubo Incidente",
+      "type": "boolean"
+    },
+    "feedback_puntaje": {
+      "anyOf": [
+        {
+          "maximum": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feedback Puntaje"
+    },
+    "feedback_causa": {
+      "anyOf": [
+        {
+          "enum": [
+            "proveedor",
+            "cliente",
+            "puerto",
+            "clima",
+            "otro"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feedback Causa"
+    }
+  },
+  "required": [
+    "servicio_id",
+    "entrega_real",
+    "a_tiempo",
+    "costo_final"
+  ],
+  "title": "CierreServicioIn",
+  "type": "object"
+}

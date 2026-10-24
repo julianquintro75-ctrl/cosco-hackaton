@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "recomendacion_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recomendacion Id"
+    },
+    "solicitud_id": {
+      "title": "Solicitud Id",
+      "type": "string"
+    },
+    "proveedor_elegido": {
+      "title": "Proveedor Elegido",
+      "type": "string"
+    },
+    "usuario": {
+      "title": "Usuario",
+      "type": "string"
+    },
+    "motivo": {
+      "anyOf": [
+        {
+          "enum": [
+            "precio",
+            "relacion",
+            "capacidad",
+            "experiencia_previa",
+            "cliente_pidio",
+            "otro"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Motivo"
+    }
+  },
+  "required": [
+    "solicitud_id",
+    "proveedor_elegido",
+    "usuario"
+  ],
+  "title": "DecisionIn",
+  "type": "object"
+}

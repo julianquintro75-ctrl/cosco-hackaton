@@ -1,0 +1,336 @@
+{
+  "$defs": {
+    "Descartado": {
+      "properties": {
+        "proveedor_id": {
+          "title": "Proveedor Id",
+          "type": "string"
+        },
+        "motivo": {
+          "enum": [
+            "sin_vehiculo",
+            "sin_capacidad",
+            "sin_cobertura",
+            "sin_certificacion",
+            "inactivo",
+            "fuera_de_plazo"
+          ],
+          "title": "Motivo",
+          "type": "string"
+        },
+        "detalle": {
+          "default": "",
+          "title": "Detalle",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proveedor_id",
+        "motivo"
+      ],
+      "title": "Descartado",
+      "type": "object"
+    },
+    "DesgloseCosto": {
+      "properties": {
+        "precio": {
+          "title": "Precio",
+          "type": "integer"
+        },
+        "retraso_esperado": {
+          "title": "Retraso Esperado",
+          "type": "integer"
+        },
+        "incidente_esperado": {
+          "title": "Incidente Esperado",
+          "type": "integer"
+        },
+        "incertidumbre": {
+          "title": "Incertidumbre",
+          "type": "integer"
+        },
+        "concentracion": {
+          "title": "Concentracion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "precio",
+        "retraso_esperado",
+        "incidente_esperado",
+        "incertidumbre",
+        "concentracion"
+      ],
+      "title": "DesgloseCosto",
+      "type": "object"
+    },
+    "ProveedorEvaluado": {
+      "properties": {
+        "posicion": {
+          "minimum": 1,
+          "title": "Posicion",
+          "type": "integer"
+        },
+        "proveedor_id": {
+          "title": "Proveedor Id",
+          "type": "string"
+        },
+        "nombre": {
+          "title": "Nombre",
+          "type": "string"
+        },
+        "costo_esperado": {
+          "title": "Costo Esperado",
+          "type": "integer"
+        },
+        "desglose": {
+          "$ref": "#/$defs/DesgloseCosto"
+        },
+        "margen_esperado": {
+          "title": "Margen Esperado",
+          "type": "integer"
+        },
+        "p_a_tiempo": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "P A Tiempo",
+          "type": "number"
+        },
+        "ic90_p_a_tiempo": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Ic90 P A Tiempo",
+          "type": "array"
+        },
+        "transito_p50_h": {
+          "title": "Transito P50 H",
+          "type": "number"
+        },
+        "transito_p90_h": {
+          "title": "Transito P90 H",
+          "type": "number"
+        },
+        "n_servicios_corredor": {
+          "title": "N Servicios Corredor",
+          "type": "integer"
+        },
+        "indice_dureza": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Indice Dureza"
+        },
+        "banda_dureza": {
+          "anyOf": [
+            {
+              "enum": [
+                "Diamante",
+                "Zafiro",
+                "Cuarzo",
+                "Yeso"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Banda Dureza"
+        },
+        "capacidad_unidades": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capacidad Unidades"
+        },
+        "alertas": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Alertas",
+          "type": "array"
+        },
+        "factores_clave": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Factores Clave",
+          "type": "array"
+        }
+      },
+      "required": [
+        "posicion",
+        "proveedor_id",
+        "nombre",
+        "costo_esperado",
+        "desglose",
+        "margen_esperado",
+        "p_a_tiempo",
+        "ic90_p_a_tiempo",
+        "transito_p50_h",
+        "transito_p90_h",
+        "n_servicios_corredor"
+      ],
+      "title": "ProveedorEvaluado",
+      "type": "object"
+    },
+    "SugerenciaPrueba": {
+      "properties": {
+        "proveedor_id": {
+          "title": "Proveedor Id",
+          "type": "string"
+        },
+        "razon": {
+          "title": "Razon",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proveedor_id",
+        "razon"
+      ],
+      "title": "SugerenciaPrueba",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "recomendacion_id": {
+      "title": "Recomendacion Id",
+      "type": "string"
+    },
+    "solicitud_id": {
+      "title": "Solicitud Id",
+      "type": "string"
+    },
+    "modelo_version": {
+      "title": "Modelo Version",
+      "type": "string"
+    },
+    "motor": {
+      "default": "A_propio",
+      "enum": [
+        "A_propio",
+        "B_jev",
+        "C_llm",
+        "hibrido"
+      ],
+      "title": "Motor",
+      "type": "string"
+    },
+    "ranking": {
+      "items": {
+        "$ref": "#/$defs/ProveedorEvaluado"
+      },
+      "maxItems": 3,
+      "title": "Ranking",
+      "type": "array"
+    },
+    "descartados": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Descartado"
+      },
+      "title": "Descartados",
+      "type": "array"
+    },
+    "requiere_revision": {
+      "title": "Requiere Revision",
+      "type": "boolean"
+    },
+    "motivos_revision": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Motivos Revision",
+      "type": "array"
+    },
+    "escalar_gerencia": {
+      "default": false,
+      "title": "Escalar Gerencia",
+      "type": "boolean"
+    },
+    "sugerencia_prueba": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SugerenciaPrueba"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "confianza": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confianza",
+      "type": "number"
+    },
+    "explicacion_texto": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Explicacion Texto"
+    },
+    "latencia_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latencia Ms"
+    },
+    "generado_en": {
+      "format": "date-time",
+      "title": "Generado En",
+      "type": "string"
+    }
+  },
+  "required": [
+    "recomendacion_id",
+    "solicitud_id",
+    "modelo_version",
+    "ranking",
+    "requiere_revision",
+    "confianza",
+    "generado_en"
+  ],
+  "title": "RecomendacionOut",
+  "type": "object"
+}

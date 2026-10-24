@@ -1,0 +1,12 @@
+numpy
+pandas
+scipy
+pydantic>=2
+fastapi
+uvicorn
+streamlit
+plotly
+catboost
+lightgbm
+scikit-learn
+shap

@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "Nivel": {
+      "enum": [
+        "Flexible",
+        "Estandar",
+        "Urgente"
+      ],
+      "title": "Nivel",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "solicitud_id": {
+      "title": "Solicitud Id",
+      "type": "string"
+    },
+    "cliente_id": {
+      "title": "Cliente Id",
+      "type": "string"
+    },
+    "corredor_id": {
+      "title": "Corredor Id",
+      "type": "string"
+    },
+    "tipo_vehiculo_req": {
+      "title": "Tipo Vehiculo Req",
+      "type": "string"
+    },
+    "tipo_carga": {
+      "default": "general",
+      "enum": [
+        "general",
+        "refrigerada",
+        "peligrosa",
+        "sobredimensionada"
+      ],
+      "title": "Tipo Carga",
+      "type": "string"
+    },
+    "peso_ton": {
+      "exclusiveMinimum": 0,
+      "title": "Peso Ton",
+      "type": "number"
+    },
+    "mercancia_peligrosa": {
+      "default": false,
+      "title": "Mercancia Peligrosa",
+      "type": "boolean"
+    },
+    "fecha_cargue": {
+      "format": "date-time",
+      "title": "Fecha Cargue",
+      "type": "string"
+    },
+    "plazo_entrega": {
+      "format": "date-time",
+      "title": "Plazo Entrega",
+      "type": "string"
+    },
+    "nivel_servicio": {
+      "$ref": "#/$defs/Nivel",
+      "default": "Estandar"
+    },
+    "tarifa_cliente": {
+      "description": "Lo que COSCO cobra al cliente (para el margen)",
+      "exclusiveMinimum": 0,
+      "title": "Tarifa Cliente",
+      "type": "integer"
+    },
+    "as_of": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Fecha 'ahora' del sistema; permite reproducir el pasado sin ver el futuro",
+      "title": "As Of"
+    }
+  },
+  "required": [
+    "solicitud_id",
+    "cliente_id",
+    "corredor_id",
+    "tipo_vehiculo_req",
+    "peso_ton",
+    "fecha_cargue",
+    "plazo_entrega",
+    "tarifa_cliente"
+  ],
+  "title": "SolicitudIn",
+  "type": "object"
+}
