@@ -26,7 +26,7 @@ class RepositorioSQLite:
 
     # ---------- infraestructura ----------
     def _con(self) -> sqlite3.Connection:
-        c = sqlite3.connect(self.ruta)
+        c = sqlite3.connect(self.ruta, timeout=30)       # espera si otra escritura está en curso en vez de fallar al instante
         c.execute("PRAGMA foreign_keys = ON")
         return c
 
@@ -43,6 +43,12 @@ class RepositorioSQLite:
         cols = [r[1] for r in con.execute("PRAGMA table_info(estadistica_proveedor)")]
         if cols and "nivel_respaldo" not in cols:
             con.execute("ALTER TABLE estadistica_proveedor ADD COLUMN nivel_respaldo TEXT")
+        con.execute("""CREATE TABLE IF NOT EXISTS rechazo (solicitud_id TEXT PRIMARY KEY REFERENCES solicitud, usuario TEXT NOT NULL,
+                       motivo TEXT NOT NULL, nota TEXT, fecha TEXT NOT NULL)""")
+        try:        # una sola decisión humana por solicitud, garantizada por la base y no solo por el código
+            con.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_decision_solicitud ON decision (solicitud_id) WHERE recomendacion_id IS NOT NULL")
+        except sqlite3.IntegrityError:
+            logging.getLogger("cosco.repo").warning("Hay solicitudes con más de una decisión: no se pudo crear el índice único")
         con.commit(); con.close()
 
     def _df(self, sql: str, params: tuple = ()) -> pd.DataFrame:
@@ -118,6 +124,7 @@ class RepositorioSQLite:
         try:
             return [j for (j,) in con.execute("""SELECT r.top3_y_desglose FROM recomendacion r WHERE NOT EXISTS
                        (SELECT 1 FROM decision d WHERE d.solicitud_id=r.solicitud_id AND d.recomendacion_id IS NOT NULL)
+                       AND NOT EXISTS (SELECT 1 FROM rechazo x WHERE x.solicitud_id=r.solicitud_id)
                        ORDER BY r.fecha DESC LIMIT ?""", (limite,))]
         finally:
             con.close()
@@ -154,9 +161,16 @@ class RepositorioSQLite:
         con = self._con()
         try:
             with con:
+                con.execute("BEGIN IMMEDIATE")      # toma el candado de escritura ya: dos decisiones simultáneas se atienden una tras otra
                 so = con.execute("SELECT fecha_cargue, plazo_entrega, nivel_servicio, corredor_id, tipo_vehiculo_req FROM solicitud WHERE solicitud_id=?", (d.solicitud_id,)).fetchone()
                 if not so:
                     raise ErrorNegocio(404, f"solicitud {d.solicitud_id} no existe: llama primero a /recomendar")
+                previa = con.execute("SELECT usuario, proveedor_elegido FROM decision WHERE solicitud_id=? AND recomendacion_id IS NOT NULL", (d.solicitud_id,)).fetchone()
+                if previa:
+                    raise ErrorNegocio(409, f"la solicitud {d.solicitud_id} ya fue decidida por {previa[0]} ({previa[1]})")
+                dev = con.execute("SELECT usuario FROM rechazo WHERE solicitud_id=?", (d.solicitud_id,)).fetchone()
+                if dev:
+                    raise ErrorNegocio(409, f"la solicitud {d.solicitud_id} fue devuelta al solicitante por {dev[0]}")
                 r = self.recomendacion(d.solicitud_id, d.recomendacion_id)
                 if not r:
                     raise ErrorNegocio(404, "no hay recomendación para esa solicitud")
@@ -214,6 +228,42 @@ class RepositorioSQLite:
             con.close()
 
     # ---------- estadística persistida ----------
+    def rechazar(self, solicitud_id: str, usuario: str, motivo: str, nota: Optional[str], fecha: str) -> dict:
+        """Devuelve la solicitud al solicitante. Excluyente con la decisión; atómico frente a una decisión simultánea."""
+        con = self._con()
+        try:
+            with con:
+                con.execute("BEGIN IMMEDIATE")
+                if not con.execute("SELECT 1 FROM solicitud WHERE solicitud_id=?", (solicitud_id,)).fetchone():
+                    raise ErrorNegocio(404, f"solicitud {solicitud_id} no existe")
+                d = con.execute("SELECT usuario, proveedor_elegido FROM decision WHERE solicitud_id=? AND recomendacion_id IS NOT NULL", (solicitud_id,)).fetchone()
+                if d:
+                    raise ErrorNegocio(409, f"la solicitud {solicitud_id} ya fue decidida por {d[0]} ({d[1]}): no se puede devolver")
+                if con.execute("SELECT 1 FROM rechazo WHERE solicitud_id=?", (solicitud_id,)).fetchone():
+                    raise ErrorNegocio(409, f"la solicitud {solicitud_id} ya fue devuelta")
+                con.execute("INSERT INTO rechazo VALUES (?,?,?,?,?)", (solicitud_id, usuario, motivo, (nota or "")[:500] or None, fecha))
+            return {"solicitud_id": solicitud_id, "motivo": motivo}
+        finally:
+            con.close()
+
+    def rechazo_de(self, solicitud_id: str) -> Optional[dict]:
+        con = self._con(); con.row_factory = sqlite3.Row
+        try:
+            r = con.execute("SELECT * FROM rechazo WHERE solicitud_id=?", (solicitud_id,)).fetchone()
+            return dict(r) if r else None
+        finally:
+            con.close()
+
+    def reservas_en_curso(self) -> list[tuple[str, str, str]]:
+        """(proveedor_id, tipo_vehiculo, fecha de la decisión) de los servicios EN_CURSO: unidades ya comprometidas que ningún reporte de capacidad refleja aún."""
+        con = self._con()
+        try:
+            return [tuple(r) for r in con.execute("""SELECT s.proveedor_id, so.tipo_vehiculo_req, d.fecha FROM servicio s
+                       JOIN solicitud so USING(solicitud_id) JOIN decision d ON d.solicitud_id = s.solicitud_id AND d.recomendacion_id IS NOT NULL
+                       WHERE s.estado='EN_CURSO'""")]
+        finally:
+            con.close()
+
     def reemplazar_estadisticas(self, df: pd.DataFrame) -> None:
         import numpy as np
         con = self._con()
@@ -280,6 +330,7 @@ class UsuariosSQLite:
         con.execute("CREATE TABLE IF NOT EXISTS ajuste (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
         con.execute("""CREATE TABLE IF NOT EXISTS notificacion (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL, evento TEXT NOT NULL,
                        solicitud_id TEXT, destino TEXT NOT NULL, estado TEXT NOT NULL, detalle TEXT)""")
+        con.execute("CREATE TABLE IF NOT EXISTS aviso_reclamo (solicitud_id TEXT NOT NULL, evento TEXT NOT NULL, PRIMARY KEY (solicitud_id, evento))")
         con.execute("CREATE TABLE IF NOT EXISTS solicitud_autor (solicitud_id TEXT PRIMARY KEY, usuario TEXT NOT NULL, fecha TEXT NOT NULL)")
         if con.execute("SELECT count(*) FROM usuario").fetchone()[0] == 0:
             con.execute("INSERT INTO usuario VALUES (?,?,?,?,1)", (usuario_semilla, "Jurado Sabana Hack", "gerencia", hash_semilla()))
@@ -337,6 +388,23 @@ class UsuariosSQLite:
         con = self._con()
         try:
             return con.execute("SELECT 1 FROM notificacion WHERE solicitud_id=? AND evento=? AND estado IN ('enviada','pendiente') LIMIT 1", (solicitud_id, evento)).fetchone() is not None
+        finally:
+            con.close()
+
+    def reclamar_aviso(self, solicitud_id: str, evento: str) -> bool:
+        """Reserva el derecho de avisar este evento de esta solicitud. Es atómico: si dos pedidos llegan a la vez, solo uno recibe True."""
+        con = self._con()
+        try:
+            c = con.execute("INSERT OR IGNORE INTO aviso_reclamo VALUES (?,?)", (solicitud_id, evento)); con.commit()
+            return c.rowcount == 1
+        finally:
+            con.close()
+
+    def liberar_aviso(self, solicitud_id: str, evento: str) -> None:
+        """Si el envío falló, devuelve el derecho para que el siguiente intento pueda avisar."""
+        con = self._con()
+        try:
+            con.execute("DELETE FROM aviso_reclamo WHERE solicitud_id=? AND evento=?", (solicitud_id, evento)); con.commit()
         finally:
             con.close()
 

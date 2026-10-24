@@ -34,10 +34,17 @@ export interface Tablas {
   capacidad_snapshot: { proveedor_id: string; tipo_vehiculo_id: string; fecha_hora: string; unidades_disponibles: number }[];
   servicios: { proveedor_id: string; entrega_real: string | null; a_tiempo: number | null; estado: string; corredor_id: string }[];
 }
+export interface NuevaSolicitud {
+  cliente_id: string; corredor_id: string; tipo_vehiculo_req: string; tipo_carga: 'general' | 'refrigerada' | 'peligrosa' | 'sobredimensionada';
+  peso_ton: number; fecha_cargue: string; plazo_entrega: string; nivel_servicio: Nivel; tarifa_cliente: number; clave_envio: string;
+}
+export type MotivoDevolucion = 'datos_incompletos' | 'sin_viabilidad_comercial' | 'cliente_cancelo' | 'precio_fuera_de_rango' | 'otro';
+export interface Devolucion { solicitud_id: string; usuario: string; motivo: MotivoDevolucion; nota: string | null; fecha: string }
 export type Rol = 'solicitante' | 'operador' | 'gerencia';
 export interface MiSolicitud {
-  solicitud_id: string; solicitante: string; fecha: string; estado: 'lista' | 'en_revision' | 'escalada' | 'decidida';
+  solicitud_id: string; solicitante: string; fecha: string; estado: 'lista' | 'en_revision' | 'escalada' | 'decidida' | 'devuelta';
   proveedor_sugerido: string | null; proveedor_elegido: string | null; decidida_por: string | null; motivos: string[];
+  devuelta_por: string | null; motivo_devolucion: string | null; nota_devolucion: string | null;
 }
 export interface AjustesAvisos { slack_activo: boolean; avisar_revision: boolean; avisar_escalamiento: boolean }
 export interface EstadoAvisos { ajustes: AjustesAvisos; webhooks: { operaciones: boolean; gerencia: boolean } }

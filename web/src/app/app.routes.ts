@@ -7,6 +7,7 @@ export const routes: Routes = [
     path: '', canActivate: [guardia], loadComponent: () => import('./layout/shell').then(m => m.Shell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'recomendar' },
+      { path: 'nueva', loadComponent: () => import('./pages/nueva').then(m => m.Nueva) },
       { path: 'recomendar', loadComponent: () => import('./pages/recomendar').then(m => m.Recomendar) },
       { path: 'recomendar/:sid', loadComponent: () => import('./pages/recomendar').then(m => m.Recomendar) },
       { path: 'solicitudes', loadComponent: () => import('./pages/solicitudes').then(m => m.Solicitudes) },

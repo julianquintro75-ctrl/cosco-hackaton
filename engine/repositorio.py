@@ -58,6 +58,12 @@ class Repositorio(Protocol):
     def cerrar_servicio(self, ci: Any) -> dict:
         """Cierra el servicio y guarda feedback/incidente. Lanza ErrorNegocio. Devuelve {coherente, entrega_real}."""
 
+    def rechazar(self, solicitud_id: str, usuario: str, motivo: str, nota: Optional[str], fecha: str) -> dict:
+        """Devuelve la solicitud al solicitante. Excluyente con la decisión y atómico frente a una decisión simultánea (ErrorNegocio 409/404)."""
+    def rechazo_de(self, solicitud_id: str) -> Optional[dict]: ...
+    def reservas_en_curso(self) -> list[tuple[str, str, str]]:
+        """(proveedor_id, tipo_vehiculo, fecha de decisión) de los servicios en curso: capacidad ya comprometida."""
+
     # ---- estadística bayesiana persistida ----
     def reemplazar_estadisticas(self, df: pd.DataFrame) -> None: ...
     def contar_estadisticas(self) -> int: ...

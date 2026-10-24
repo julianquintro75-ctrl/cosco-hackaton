@@ -58,9 +58,39 @@
       }
       @if (esSolicitante()) { <div class="aviso info" role="status"><app-icono nombre="info" />{{ i18n.t('rec.soloLectura') }}</div> }
       @else if (rec()?.escalar_gerencia && !puedeDecidir()) { <div class="aviso ambar" role="status"><app-icono nombre="info" />{{ i18n.t('rec.soloGerencia') }}</div> }
+      @if (devuelta(); as d) {
+        <div class="aviso rojo" role="status"><app-icono nombre="alto" /><div>{{ i18n.t('dev.devuelta', { usuario: d.usuario }) }}
+          <ul><li>{{ i18n.t('dev.motivo.' + d.motivo) }}@if (d.nota) { : {{ d.nota }} }</li></ul></div></div>
+      }
       @if (previa(); as p) { <div class="aviso ambar" role="status"><app-icono nombre="info" />{{ i18n.t('rec.yaDecidida', { usuario: p.usuario }) }}</div> }
 
       @if (rec(); as r) {
+        @if (puedeDecidir() && !registrada() && !previa() && !devuelta()) {
+          <div class="devolver">
+            @if (!devolviendo()) {
+              <button type="button" class="btn peq" (click)="devolviendo.set(true)">{{ i18n.t('dev.boton') }}</button>
+            } @else {
+              <form class="motivo" (ngSubmit)="confirmarDevolucion()">
+                <div class="campo">
+                  <label for="motdev">{{ i18n.t('dev.titulo') }}</label>
+                  <select id="motdev" name="motdev" class="ctl" [ngModel]="motivoDev()" (ngModelChange)="motivoDev.set($event)" required>
+                    <option value="" disabled>—</option>
+                    @for (m of motivosDev; track m) { <option [value]="m">{{ i18n.t('dev.motivo.' + m) }}</option> }
+                  </select>
+                </div>
+                <div class="campo">
+                  <label for="notadev">{{ i18n.t(motivoDev() === 'otro' ? 'dev.notaObligatoria' : 'dev.nota') }}</label>
+                  <textarea id="notadev" name="notadev" class="ctl nota" rows="2" maxlength="500" [ngModel]="notaDev()" (ngModelChange)="notaDev.set($event)"></textarea>
+                  <small class="tenue">{{ i18n.t('dev.ayuda') }}</small>
+                </div>
+                <div class="acciones">
+                  <button type="submit" class="btn primario" [disabled]="!motivoDev() || (motivoDev() === 'otro' && !notaDev().trim()) || enviando()">{{ i18n.t('dev.confirmar') }}</button>
+                  <button type="button" class="btn" (click)="devolviendo.set(false)">{{ i18n.t('rec.cancelar') }}</button>
+                </div>
+              </form>
+            }
+          </div>
+        }
         <div class="aviso" [class]="'aviso ' + estado()">
           <app-icono [nombre]="estado() === 'ok' ? 'ok' : estado() === 'ambar' ? 'info' : 'alto'" />
           <div>
@@ -109,7 +139,7 @@
                   </button>
                   <a class="btn fantasma peq" [routerLink]="['/proveedores', p.proveedor_id]">{{ i18n.t('rec.fichaVer') }}</a>
                   <span class="espacio"></span>
-                  @if (!registrada() && !previa() && puedeDecidir()) {
+                  @if (!registrada() && !previa() && !devuelta() && puedeDecidir()) {
                     @if (p.posicion === 1) {
                       <button type="button" class="btn primario" (click)="aprobar()" [disabled]="enviando()">{{ i18n.t('rec.aprobar') }}</button>
                     } @else {

@@ -95,9 +95,11 @@ def notificar(almacen, sol, rec: RecomendacionOut, autor: str) -> None:
         aj = almacen.ajustes()
         if not aj["slack_activo"] or not aj["avisar_escalamiento" if evento == "escalamiento" else "avisar_revision"]:
             return                                       # apagado a propósito: no se registra ruido
-        if almacen.ya_notificada(sol.solicitud_id, evento):
-            return                                       # recalcular la misma solicitud no repite el aviso
+        if not almacen.reclamar_aviso(sol.solicitud_id, evento):
+            return                                       # ya se avisó (o lo está haciendo otro pedido simultáneo): recalcular no repite el aviso
         estado, detalle = enviar(destino, mensaje(evento, sol, rec, autor))
+        if estado != "enviada":
+            almacen.liberar_aviso(sol.solicitud_id, evento)   # que un próximo intento pueda volver a avisar
         almacen.registrar_notificacion(ahora, evento, sol.solicitud_id, destino, estado, detalle)
     except Exception:                                    # un aviso fallido jamás debe romper el flujo
         log.exception("Error al notificar")

@@ -88,3 +88,10 @@ CREATE TABLE IF NOT EXISTS estadistica_proveedor (
   nivel_respaldo TEXT,                      -- agregado en el paso 4: corredor | corredor_cualquier_carga | proveedor | global
   PRIMARY KEY (proveedor_id, corredor_id, tipo_carga)
 );
+
+-- Una persona puede devolver una solicitud al solicitante (no se asigna a ningún proveedor). Excluyente con la decisión.
+CREATE TABLE IF NOT EXISTS rechazo (
+  solicitud_id TEXT PRIMARY KEY REFERENCES solicitud, usuario TEXT NOT NULL, motivo TEXT NOT NULL, nota TEXT, fecha TEXT NOT NULL
+);
+-- A lo sumo una decisión humana por solicitud (las históricas, con recomendacion_id NULL, quedan fuera de la regla).
+CREATE UNIQUE INDEX IF NOT EXISTS ux_decision_solicitud ON decision (solicitud_id) WHERE recomendacion_id IS NOT NULL;

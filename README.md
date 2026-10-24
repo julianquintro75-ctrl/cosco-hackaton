@@ -55,6 +55,7 @@ Detalle, decisiones y puntos de extensión en [`docs/ARQUITECTURA.md`](docs/ARQU
 |---|---|
 | `GET /salud` | Estado del servicio y de los datos |
 | `POST /recomendar` | Solicitud → Top-3, descartados, alertas, explicación |
+| `POST /solicitudes` | Crea una solicitud nueva (cliente, corredor, vehículo, peso, plazo); idempotente por `clave_envio` |
 | `POST /decision` | Registra qué decidió la persona (y por qué si se aparta) |
 | `POST /cierre` | Registra el resultado real del servicio |
 | `GET /proveedores/{id}/ficha` | Ficha e Índice de Dureza |
@@ -84,6 +85,13 @@ Los permisos los hace cumplir la API (HTTP 403), no solo el menú del frontend.
 3. Reinicia con `docker compose up -d`. En **Avisos** (gerencia) activas o desactivas cada tipo de aviso y envías un mensaje de prueba.
 
 Endpoints nuevos: `GET /mis-solicitudes`, `GET`/`PUT /notificaciones/ajustes`, `GET /notificaciones/historial`, `POST /notificaciones/probar`.
+
+## Solicitudes nuevas, devolución y solicitudes simultáneas
+
+- **Nueva solicitud** (pantalla propia, `POST /solicitudes`): el servidor asigna el id, valida peso contra la capacidad del vehículo y el plazo contra el cargue.
+- **Devolver al solicitante** (`POST /rechazo`, operador o gerencia; lo escalado, solo gerencia): motivo obligatorio y nota; el solicitante lo ve como «Devuelta» y puede crear una nueva con los mismos datos. Consulta: `GET /rechazos/{sid}`.
+- **Dos a la vez**: una solicitud solo puede decidirse o devolverse una vez, la capacidad comprometida se descuenta y un doble envío crea una sola solicitud. Tabla completa en [`docs/CASOS_BORDE.md`](docs/CASOS_BORDE.md); demo en vivo con `python scripts/demo_concurrencia.py`.
+- Guion de la demostración por roles: [`docs/guion_demo.md`](docs/guion_demo.md).
 
 ## Estructura
 

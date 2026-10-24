@@ -21,7 +21,7 @@ import { Icono } from '../shared/icono';
       <p class="tenue" role="status"><span class="giro"></span> {{ i18n.t('c.cargando') }}</p>
     } @else if (!lista().length) {
       <div class="tarjeta vacio"><strong>{{ i18n.t('sol.vacio') }}</strong><span>{{ i18n.t('sol.vacioDetalle') }}</span>
-        <a class="btn primario peq" routerLink="/recomendar">{{ i18n.t('sol.nueva') }} <app-icono nombre="flecha" [tam]="16" /></a></div>
+        <a class="btn primario peq" routerLink="/nueva">{{ i18n.t('sol.nueva') }} <app-icono nombre="flecha" [tam]="16" /></a></div>
     } @else {
       <ul class="lista">
         @for (s of lista(); track s.solicitud_id) {
@@ -31,13 +31,17 @@ import { Icono } from '../shared/icono';
               <span class="tenue peq">{{ i18n.fecha(s.fecha) }} @if (!propias()) { · {{ s.solicitante }} }</span>
             </div>
             <div class="estado">
-              <span class="chip" [class.ok]="s.estado === 'decidida'" [class.rojo]="s.estado === 'escalada'" [class.ambar]="s.estado === 'en_revision'" [class.azul]="s.estado === 'lista'">{{ i18n.t('sol.estado.' + s.estado) }}</span>
+              <span class="chip" [class.ok]="s.estado === 'decidida'" [class.rojo]="s.estado === 'escalada' || s.estado === 'devuelta'" [class.ambar]="s.estado === 'en_revision'" [class.azul]="s.estado === 'lista'">{{ i18n.t('sol.estado.' + s.estado) }}</span>
               <span class="tenue peq">
-                @if (s.proveedor_elegido) { {{ i18n.t('sol.elegido', { proveedor: s.proveedor_elegido, usuario: s.decidida_por ?? '' }) }} }
+                @if (s.estado === 'devuelta') { {{ i18n.t('dev.motivo.' + s.motivo_devolucion) }}{{ s.nota_devolucion ? ': ' + s.nota_devolucion : '' }} · {{ s.devuelta_por }} }
+                @else if (s.proveedor_elegido) { {{ i18n.t('sol.elegido', { proveedor: s.proveedor_elegido, usuario: s.decidida_por ?? '' }) }} }
                 @else if (s.proveedor_sugerido) { {{ i18n.t('sol.sugerido', { proveedor: s.proveedor_sugerido }) }} }
               </span>
             </div>
-            <a class="btn peq" [routerLink]="['/recomendar', s.solicitud_id]">{{ i18n.t('sol.abrir') }} <app-icono nombre="flecha" [tam]="16" /></a>
+            <div class="acc">
+              @if (s.estado === 'devuelta' && propias()) { <a class="btn primario peq" routerLink="/nueva" [queryParams]="{ desde: s.solicitud_id }">{{ i18n.t('sol.crearNueva') }}</a> }
+              <a class="btn peq" [routerLink]="['/recomendar', s.solicitud_id]">{{ i18n.t('sol.abrir') }} <app-icono nombre="flecha" [tam]="16" /></a>
+            </div>
           </li>
         }
       </ul>
@@ -46,6 +50,7 @@ import { Icono } from '../shared/icono';
   styles: `
     .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
     .fila { display: grid; grid-template-columns: minmax(160px, 1fr) 2fr auto; gap: 1rem; align-items: center; padding: .9rem 1.1rem; }
+    .acc { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
     .vacio .btn { text-decoration: none; }
     .que, .estado { display: grid; gap: .25rem; justify-items: start; }
     @media (max-width: 760px) { .fila { grid-template-columns: 1fr; } .fila .btn { justify-self: start; } }`,

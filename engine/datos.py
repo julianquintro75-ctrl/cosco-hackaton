@@ -68,6 +68,24 @@ class Base:
                      for k, g in self.capacidad.groupby(["proveedor_id", "tipo_vehiculo_id"])}
         self.version_datos = (len(self.entregados), str(self.entregados.entrega_real.max()), len(self.servicios_todos))
         self._cache = {}
+        self.refrescar_reservas()
+
+    # ---------- capacidad ya comprometida ----------
+    def refrescar_reservas(self):
+        """Lee los servicios en curso (decisiones tomadas): son unidades que el último reporte de capacidad aún no refleja.
+        Es una consulta liviana; la API la repite antes de recomendar y de decidir, así dos solicitudes simultáneas no se disputan la misma unidad."""
+        res: dict[tuple[str, str], list] = {}
+        if self.repo is not None:
+            for pid, veh, fecha in self.repo.reservas_en_curso():
+                res.setdefault((pid, veh), []).append(pd.Timestamp(fecha))
+        self._reservas = res
+
+    def reservadas(self, pid: str, vehiculo: str, desde) -> int:
+        """Unidades comprometidas por decisiones posteriores al reporte de capacidad (`desde`)."""
+        if desde is None:
+            return 0
+        d = pd.Timestamp(desde)
+        return sum(1 for t in self._reservas.get((pid, vehiculo), ()) if t >= d)
 
     def invalidar(self):
         self.cargar()

@@ -25,6 +25,7 @@ const RUTAS: Record<string, string> = {
   libro: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13',
   campana: 'M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0',
   lista: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  mas: 'M12 5v14M5 12h14',
   llave: 'M14 10a4 4 0 1 0-3.9 4H12l1.5 1.5L15 14l1.5 1.5L18 14l-1.3-1.3A4 4 0 0 0 14 10z',
 };
 

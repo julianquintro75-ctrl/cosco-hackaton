@@ -9,19 +9,19 @@ Lectura para interfaces: /config, /datos/tablas, /solicitudes/prueba, /solicitud
 Roles: solicitante (pide y ve lo suyo) · operador (revisa y decide) · gerencia (todo, además decide lo escalado y gestiona los avisos).
 Avisos por Slack: ver app/notificaciones.py. Arranque: uvicorn app.api:app --reload"""
 from __future__ import annotations
-import json, os, threading
+import json, os, threading, uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from app import auth, notificaciones
-from contratos.contracts import CierreServicioIn, DecisionIn, RecomendacionOut, SolicitudIn
+from contratos.contracts import CierreServicioIn, DecisionIn, Nivel, RecomendacionOut, SolicitudIn
 from engine.datos import Base, cargar_config
 from engine.repositorio import ErrorNegocio, crear_repositorio
 from engine.estadisticas import actualizar_con_servicio
@@ -113,9 +113,7 @@ def salud():
             "ultimo_entregado": str(E.base.entregados.entrega_real.max()), "datos": "sintéticos"}
 
 
-@app.post("/recomendar", response_model=RecomendacionOut)
-def recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.sesion)):
-    E = estado()
+def _validar(E: "Estado", sol: SolicitudIn) -> None:
     b = E.base
     if sol.corredor_id not in b.corredores.index:
         raise HTTPException(422, f"corredor desconocido: {sol.corredor_id}")
@@ -126,7 +124,15 @@ def recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.
     cap = float(b.vehiculos.loc[sol.tipo_vehiculo_req].capacidad_ton)
     if sol.peso_ton > cap:
         raise HTTPException(422, f"el peso ({sol.peso_ton} t) supera la capacidad del vehículo {sol.tipo_vehiculo_req} ({cap:g} t)")
+
+
+def _recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict) -> RecomendacionOut:
+    E = estado()
+    _validar(E, sol)
+    if E.repo.rechazo_de(sol.solicitud_id):
+        raise HTTPException(409, f"la solicitud {sol.solicitud_id} fue devuelta al solicitante; crea una nueva")
     with E.lock:
+        E.base.refrescar_reservas()                  # incluye lo que otra persona acaba de decidir
         out = E.motor.recomendar(sol)
         as_of = as_of_de(sol)
         E.repo.guardar_recomendacion(sol, out, as_of.strftime(ISO))
@@ -134,6 +140,57 @@ def recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.
     alm.registrar_autor(sol.solicitud_id, u["usuario"], datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
     fondo.add_task(notificaciones.notificar, alm, sol, out, u["usuario"])      # aviso por Slack en segundo plano
     return out
+
+
+@app.post("/recomendar", response_model=RecomendacionOut)
+def recomendar(sol: SolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.sesion)):
+    return _recomendar(sol, fondo, u)
+
+
+class NuevaSolicitudIn(BaseModel):
+    """Lo que escribe quien pide el servicio. El identificador lo asigna el servidor."""
+    cliente_id: str
+    corredor_id: str
+    tipo_vehiculo_req: str
+    tipo_carga: Literal["general", "refrigerada", "peligrosa", "sobredimensionada"] = "general"
+    peso_ton: float = Field(gt=0)
+    fecha_cargue: datetime
+    plazo_entrega: datetime
+    nivel_servicio: Nivel = Nivel.ESTANDAR
+    tarifa_cliente: int = Field(gt=0)
+    clave_envio: Optional[str] = Field(None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$", description="Identifica este envío del formulario: si se repite (doble clic, reintento) no crea otra solicitud")
+
+
+@app.post("/solicitudes", response_model=RecomendacionOut)
+def nueva_solicitud(n: NuevaSolicitudIn, fondo: BackgroundTasks, u: dict = Depends(auth.sesion)):
+    """Crea una solicitud nueva y devuelve su recomendación. Idempotente por `clave_envio`: repetir el mismo envío no duplica nada."""
+    E = estado()
+    if n.plazo_entrega <= n.fecha_cargue:
+        raise HTTPException(422, "el plazo de entrega debe ser posterior al cargue")
+    if (n.plazo_entrega - n.fecha_cargue).days > 30:
+        raise HTTPException(422, "el plazo de entrega no puede superar 30 días desde el cargue")
+    sid = "W" + datetime.now().strftime("%Y%m%d") + "-" + (n.clave_envio[:12].upper() if n.clave_envio else uuid.uuid4().hex[:8].upper())
+    sol = SolicitudIn(solicitud_id=sid, mercancia_peligrosa=n.tipo_carga == "peligrosa", **n.model_dump(exclude={"clave_envio"}))
+    prev = E.repo.solicitud(sid)
+    if prev:        # mismo envío repetido: solo vale si los datos son idénticos; si no, la clave se está reutilizando
+        mismo = (prev["cliente_id"], prev["corredor_id"], prev["tipo_vehiculo_req"], float(prev["peso_ton"]), int(prev["tarifa_cliente"])) == \
+                (sol.cliente_id, sol.corredor_id, sol.tipo_vehiculo_req, sol.peso_ton, sol.tarifa_cliente)
+        if not mismo:
+            raise HTTPException(409, "esa clave de envío ya se usó con otros datos")
+    return _recomendar(sol, fondo, u)
+
+
+def _capacidad_vigente(E: "Estado", d: DecisionIn) -> None:
+    """Vuelve a mirar la capacidad justo antes de asignar: si otra decisión acaba de comprometer la última unidad, se frena con un mensaje claro."""
+    r = E.repo.recomendacion(d.solicitud_id, d.recomendacion_id)
+    so = E.repo.solicitud(d.solicitud_id)
+    if not r or not so:
+        return                                          # el repositorio responde con su propio 404
+    E.base.refrescar_reservas()
+    as_of = RecomendacionOut.model_validate_json(r[1]).generado_en
+    unid, f_cap = E.base.capacidad_en(d.proveedor_elegido, so["tipo_vehiculo_req"], as_of)
+    if unid is not None and unid - E.base.reservadas(d.proveedor_elegido, so["tipo_vehiculo_req"], f_cap) <= 0:
+        raise HTTPException(409, f"{d.proveedor_elegido} ya no tiene unidades {so['tipo_vehiculo_req']} libres: otra decisión acaba de comprometer la última. Recalcula la recomendación")
 
 
 @app.post("/decision")
@@ -145,6 +202,7 @@ def decision(d: DecisionIn, u: dict = Depends(auth.exigir_rol("operador", "geren
         if r and RecomendacionOut.model_validate_json(r[1]).escalar_gerencia:
             raise HTTPException(403, "Este caso está escalado a gerencia: solo gerencia puede decidirlo")
     with E.lock:
+        _capacidad_vigente(E, d)
         r = E.repo.registrar_decision(d, E.base.tarifa_vigente, proveedores_validos=E.base.nombres, ventana_flex_h=E.cfg.get("ventana_flex_h", 72))
         E._tablas_json = {}
         return r
@@ -240,21 +298,50 @@ def tablero_cierres(_u: dict = Depends(auth.exigir_rol("operador", "gerencia")))
     return Response(_json(estado().repo.cierres_tablero()), media_type="application/json")
 
 
+MOTIVOS_DEVOLUCION = ("datos_incompletos", "sin_viabilidad_comercial", "cliente_cancelo", "precio_fuera_de_rango", "otro")
+
+
+class RechazoIn(BaseModel):
+    solicitud_id: str
+    motivo: Literal["datos_incompletos", "sin_viabilidad_comercial", "cliente_cancelo", "precio_fuera_de_rango", "otro"]
+    nota: Optional[str] = Field(None, max_length=500)
+
+
+@app.post("/rechazo")
+def rechazo(r: RechazoIn, u: dict = Depends(auth.exigir_rol("operador", "gerencia"))):
+    """Devuelve la solicitud al solicitante con un motivo: no se asigna a ningún proveedor. Lo escalado a gerencia solo lo devuelve gerencia."""
+    E = estado()
+    if r.motivo == "otro" and not (r.nota or "").strip():
+        raise HTTPException(422, "con el motivo «otro» escribe una nota")
+    if u["rol"] != "gerencia":
+        rec = E.repo.recomendacion(r.solicitud_id)
+        if rec and RecomendacionOut.model_validate_json(rec[1]).escalar_gerencia:
+            raise HTTPException(403, "Este caso está escalado a gerencia: solo gerencia puede devolverlo")
+    with E.lock:
+        return E.repo.rechazar(r.solicitud_id, u["usuario"], r.motivo, r.nota, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+
+
+@app.get("/rechazos/{sid}")
+def rechazo_de(sid: str):
+    return estado().repo.rechazo_de(sid)
+
+
 # ---------- seguimiento por rol y avisos ----------
 @app.get("/mis-solicitudes")
 def mis_solicitudes(u: dict = Depends(auth.sesion)):
-    """El solicitante ve las suyas; operador y gerencia ven todas. Estado: decidida · escalada · en_revision · lista (sin decidir y sin alerta)."""
+    """El solicitante ve las suyas; operador y gerencia ven todas. Estado: decidida · devuelta · escalada · en_revision · lista (sin decidir y sin alerta)."""
     E = estado()
     out = []
     for a in auth.almacen().solicitudes_de(None if u["rol"] in ("operador", "gerencia") else u["usuario"]):
         sid = a["solicitud_id"]
-        r, d = E.repo.recomendacion(sid), E.repo.decision_de(sid)
+        r, d, dev = E.repo.recomendacion(sid), E.repo.decision_de(sid), E.repo.rechazo_de(sid)
         rec = RecomendacionOut.model_validate_json(r[1]) if r else None
-        estado_ = "decidida" if d else ("escalada" if rec and rec.escalar_gerencia else "en_revision" if rec and rec.requiere_revision else "lista")
+        estado_ = "decidida" if d else "devuelta" if dev else ("escalada" if rec and rec.escalar_gerencia else "en_revision" if rec and rec.requiere_revision else "lista")
         top = rec.ranking[0] if rec and rec.ranking else None
         out.append({"solicitud_id": sid, "solicitante": a["usuario"], "fecha": a["fecha"], "estado": estado_,
                     "proveedor_sugerido": top.nombre if top else None, "proveedor_elegido": d["proveedor_elegido"] if d else None,
-                    "decidida_por": d["usuario"] if d else None, "motivos": rec.motivos_revision if rec else []})
+                    "decidida_por": d["usuario"] if d else None, "motivos": rec.motivos_revision if rec else [],
+                    "devuelta_por": dev["usuario"] if dev else None, "motivo_devolucion": dev["motivo"] if dev else None, "nota_devolucion": dev["nota"] if dev else None})
     return out
 
 

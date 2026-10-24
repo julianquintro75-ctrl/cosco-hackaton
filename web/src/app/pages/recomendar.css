@@ -29,3 +29,7 @@
 .desliza { overflow-x: auto; }
 @media (max-width: 1080px) { .rejilla { grid-template-columns: 1fr; } .entrada { position: static; } }
 @media (max-width: 560px) { .prov header { grid-template-columns: auto 1fr; } .costo { grid-column: 1 / -1; text-align: left; } .resumen div { grid-template-columns: 6.5rem 1fr; } }
+
+.devolver { display: flex; justify-content: flex-end; }
+.devolver .motivo { width: 100%; }
+.nota { min-height: 72px; padding: .6rem .85rem; resize: vertical; font: inherit; }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { CONFIG } from './config';
-import { AjustesAvisos, Aviso, EstadoAvisos, Ficha, MiSolicitud, Nivel, Pendiente, Recomendacion, Sesion, Solicitud, Tablas } from './modelos';
+import { AjustesAvisos, Aviso, Devolucion, EstadoAvisos, Ficha, MiSolicitud, MotivoDevolucion, NuevaSolicitud, Nivel, Pendiente, Recomendacion, Sesion, Solicitud, Tablas } from './modelos';
 
 @Injectable({ providedIn: 'root' })
 export class Api {
@@ -28,6 +28,9 @@ export class Api {
   ficha(pid: string) { return this.una('ficha' + pid, () => firstValueFrom(this.http.get<Ficha>(this.u(`/proveedores/${pid}/ficha`)))); }
   decisiones() { return firstValueFrom(this.http.get<{ acepto_recomendacion?: number }[]>(this.u('/tableros/decisiones'))); }
 
+  nuevaSolicitud(n: NuevaSolicitud) { return firstValueFrom(this.http.post<Recomendacion>(this.u('/solicitudes'), n)); }
+  devolver(solicitud_id: string, motivo: MotivoDevolucion, nota: string | null) { return firstValueFrom(this.http.post<unknown>(this.u('/rechazo'), { solicitud_id, motivo, nota })); }
+  devolucionDe(id: string) { return firstValueFrom(this.http.get<Devolucion | null>(this.u(`/rechazos/${encodeURIComponent(id)}`))); }
   misSolicitudes() { return firstValueFrom(this.http.get<MiSolicitud[]>(this.u('/mis-solicitudes'))); }
   estadoAvisos() { return firstValueFrom(this.http.get<EstadoAvisos>(this.u('/notificaciones/ajustes'))); }
   cambiarAvisos(a: Partial<AjustesAvisos>) { return firstValueFrom(this.http.put<EstadoAvisos>(this.u('/notificaciones/ajustes'), a)); }

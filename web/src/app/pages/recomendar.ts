@@ -4,13 +4,14 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Api } from '../core/api';
 import { Auth } from '../core/auth';
-import { Nivel, Recomendacion, Solicitud, Tablas } from '../core/modelos';
+import { Devolucion, MotivoDevolucion, Nivel, Recomendacion, Solicitud, Tablas } from '../core/modelos';
 import { I18n } from '../i18n/i18n.service';
 import { cargaTexto, traducir } from '../i18n/motor';
 import { Icono } from '../shared/icono';
 import { DesgloseBarra } from '../shared/desglose';
 
 const NIVELES: Nivel[] = ['Flexible', 'Estandar', 'Urgente'];
+const MOTIVOS_DEV: MotivoDevolucion[] = ['datos_incompletos', 'sin_viabilidad_comercial', 'cliente_cancelo', 'precio_fuera_de_rango', 'otro'];
 const MOTIVOS = ['precio', 'relacion', 'capacidad', 'experiencia_previa', 'cliente_pidio', 'otro'] as const;
 
 @Component({
@@ -40,7 +41,11 @@ export class Recomendar {
   enviando = signal(false);
   registrada = signal<{ acepto: boolean } | null>(null);
   previa = signal<{ usuario: string } | null>(null);
-  niveles = NIVELES; motivos = MOTIVOS;
+  niveles = NIVELES; motivos = MOTIVOS; motivosDev = MOTIVOS_DEV;
+  devuelta = signal<Devolucion | null>(null);
+  devolviendo = signal(false);
+  motivoDev = signal<MotivoDevolucion | ''>('');
+  notaDev = signal('');
 
   filtradas = computed(() => {
     const q = this.buscar().trim().toLowerCase();
@@ -60,7 +65,7 @@ export class Recomendar {
     this.cargar();
     // Solo reacciona a cambios de la ruta o a que lleguen las solicitudes. El resto va «untracked»: si no, elegir() y recomendar()
     // leen y escriben señales dentro del efecto y lo vuelven a disparar sin fin (pedía /recomendar en bucle).
-    effect(() => { const s = this.sid(); const hay = this.solicitudes().length > 0; if (s && hay) untracked(() => { this.elegir(s); this.recomendar(); }); });
+    effect(() => { const s = this.sid(); const hay = this.solicitudes().length > 0; if (s && hay) untracked(async () => { await this.asegurar(s); this.elegir(s); this.recomendar(); }); });
   }
 
   async cargar() {
@@ -73,6 +78,12 @@ export class Recomendar {
     } catch { this.cargaError.set(true); }
   }
 
+  /** Las solicitudes nuevas no están en la lista de prueba: se piden por su identificador y se suman a la lista. */
+  private async asegurar(id: string) {
+    if (this.solicitudes().some(x => x.solicitud_id === id)) return;
+    try { const s = await this.api.solicitud(id); this.solicitudes.update(l => [s, ...l]); } catch { /* si no existe, el selector queda como estaba */ }
+  }
+
   etiqueta(s: Solicitud) { return `${s.solicitud_id} · ${s.corredor_id} · ${s.tipo_vehiculo_req} · ${this.i18n.t('rec.nivel.' + s.nivel_servicio)}`; }
   nombreCliente(id: string) { return this.tablas()?.cliente.find(c => c.cliente_id === id)?.nombre ?? id; }
   corredor(id: string) { const c = this.tablas()?.corredor.find(x => x.corredor_id === id); return c ? `${id} · ${c.origen} → ${c.destino}` : id; }
@@ -83,13 +94,15 @@ export class Recomendar {
     this.elegida.set(id);
     const s = this.solicitudes().find(x => x.solicitud_id === id);
     if (s) this.nivel.set(s.nivel_servicio);
-    this.rec.set(null); this.error.set(''); this.registrada.set(null); this.previa.set(null); this.eligiendo.set(null); this.abiertos.set(new Set());
+    this.rec.set(null); this.error.set(''); this.registrada.set(null); this.previa.set(null); this.devuelta.set(null); this.devolviendo.set(false); this.eligiendo.set(null); this.abiertos.set(new Set());
   }
 
   async recomendar() {
     const s = this.actual(); if (!s || this.calculando()) return;
     this.calculando.set(true); this.error.set(''); this.registrada.set(null); this.eligiendo.set(null);
     try {
+      const dev = await this.api.devolucionDe(s.solicitud_id).catch(() => null);
+      if (dev) { this.devuelta.set(dev); this.previa.set(null); return; }       // devuelta al solicitante: no se recalcula
       const [r, d] = await Promise.all([this.api.recomendar(s, this.nivel()), this.api.decisionDe(s.solicitud_id).catch(() => null)]);
       this.rec.set(r); this.previa.set(d ? { usuario: d.usuario } : null);
     } catch (e) { this.error.set(this.mensaje(e)); } finally { this.calculando.set(false); }
@@ -101,6 +114,17 @@ export class Recomendar {
 
   async aprobar() { const r = this.rec(); if (r?.ranking.length) await this.decidir(r.ranking[0].proveedor_id, null); }
   async confirmar() { const p = this.eligiendo(); if (p && this.motivo()) await this.decidir(p, this.motivo()); }
+
+  async confirmarDevolucion() {
+    const r = this.rec(), m = this.motivoDev(); if (!r || !m || this.enviando()) return;
+    if (m === 'otro' && !this.notaDev().trim()) return;
+    this.enviando.set(true); this.error.set('');
+    try {
+      await this.api.devolver(r.solicitud_id, m, this.notaDev().trim() || null);
+      this.devuelta.set({ solicitud_id: r.solicitud_id, usuario: this.auth.usuario()?.usuario ?? '', motivo: m, nota: this.notaDev().trim() || null, fecha: '' });
+      this.devolviendo.set(false);
+    } catch (e) { this.error.set(this.mensaje(e)); } finally { this.enviando.set(false); }
+  }
 
   private async decidir(pid: string, motivo: string | null) {
     const r = this.rec(); if (!r || this.enviando()) return;

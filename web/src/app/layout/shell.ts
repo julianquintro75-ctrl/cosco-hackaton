@@ -79,6 +79,7 @@ export class Shell {
   i18n = inject(I18n);
   auth = inject(Auth);
   private todos = [
+    { ruta: '/nueva', icono: 'mas', clave: 'nav.nueva' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/recomendar', icono: 'recomendar', clave: 'nav.recomendar' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/solicitudes', icono: 'lista', clave: 'nav.solicitudes' as const, roles: ['solicitante', 'operador', 'gerencia'] },
     { ruta: '/pendientes', icono: 'pendientes', clave: 'nav.pendientes' as const, roles: ['operador', 'gerencia'] },

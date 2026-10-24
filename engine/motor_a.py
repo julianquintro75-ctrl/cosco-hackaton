@@ -101,8 +101,13 @@ class MotorA(MotorDecision):
             if falta:
                 descartados.append(Descartado(proveedor_id=pid, motivo="sin_certificacion", detalle="le falta " + ", ".join(sorted(falta)))); continue
             unid, f_cap = b.capacidad_en(pid, sol.tipo_vehiculo_req, as_of)
-            if unid is not None and unid <= 0:
-                descartados.append(Descartado(proveedor_id=pid, motivo="sin_capacidad", detalle=f"0 unidades {sol.tipo_vehiculo_req} en el reporte del {f_cap.date()}")); continue
+            if unid is not None:
+                comprometidas = b.reservadas(pid, sol.tipo_vehiculo_req, f_cap)      # servicios en curso decididos después de ese reporte
+                unid -= comprometidas
+                if unid <= 0:
+                    detalle = (f"0 unidades {sol.tipo_vehiculo_req} en el reporte del {f_cap.date()}" if not comprometidas else
+                               f"el reporte del {f_cap.date()} tenía {unid + comprometidas} y {comprometidas} ya están comprometidas en servicios en curso")
+                    descartados.append(Descartado(proveedor_id=pid, motivo="sin_capacidad", detalle=detalle)); continue
             st = self.est.combo(as_of, pid, sol.corredor_id, sol.tipo_carga)
             p_nc = self.prob_no_cumplir(as_of, pid, sol.corredor_id, sol.tipo_carga, H, st["p_tarde"])
             lo, hi = st["ic90_p_tarde"]; d = p_nc - st["p_tarde"]
