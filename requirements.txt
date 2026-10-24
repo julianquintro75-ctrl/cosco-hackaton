@@ -10,3 +10,4 @@ catboost
 lightgbm
 scikit-learn
 shap
+tabulate
